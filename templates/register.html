@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>새 시약 등록</h2>
+<form action="/register" method="POST">
+    <div class="form-group">
+        <label for="name">시약</label>
+        <input type="text" id="name" name="name" autocomplete="off" required>
+    </div>
+    <div class="form-group">
+        <label for="category">구분</label>
+        <select id="category" name="category">
+            <option value=""></option>
+            <option value="유기물">유기물</option>
+            <option value="무기물">무기물</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="amount">수량</label>
+        <input type="text" id="amount" name="amount" autocomplete="off" required>
+    </div>
+    <div class="form-group">
+        <label for="left_amount">잔량</label>
+        <input type="text" id="left_amount" name="left_amount" autocomplete="off" required>
+    </div>
+    <div class="form-group">
+        <label for="location">밀폐 시약장 번호</label>
+        <select id="location" name="location">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="misc">비고</label>
+        <select id="misc" name="misc">
+            <option value=""></option>
+            <option value="독극물">독극물</option>
+        </select>
+    </div>
+    <button type="submit">등록하기</button>
+</form>
+{% endblock %}

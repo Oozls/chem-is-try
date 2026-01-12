@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>📝 시약 정보 수정</h2>
+<p style="color: #666;">데이터를 수정한 후 저장 버튼을 눌러주세요.</p>
+
+<form action="/edit/{{ reagent._id }}" method="POST">
+    <div class="form-group">
+        <label for="name">시약</label>
+        <input type="text" id="name" name="name" value="{{ reagent.name }}" autocomplete="off" required>
+    </div>
+
+    <div class="form-group">
+        <label for="category">구분</label>
+        <select id="category" name="category">
+            <option value="" {% if not reagent.category %}selected{% endif %}></option>
+            <option value="유기물" {% if reagent.category == '유기물' %}selected{% endif %}>유기물</option>
+            <option value="무기물" {% if reagent.category == '무기물' %}selected{% endif %}>무기물</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="amount">수량</label>
+        <input type="text" id="amount" name="amount" value="{{ reagent.amount }}" autocomplete="off" required>
+    </div>
+
+    <div class="form-group">
+        <label for="left_amount">잔량</label>
+        <input type="text" id="left_amount" name="left_amount" value="{{ reagent.left_amount }}" autocomplete="off" required>
+    </div>
+
+    <div class="form-group">
+        <label for="location">밀폐 시약장 번호</label>
+        <select id="location" name="location">
+            {% for i in range(1, 9) %}
+                <option value="{{ i }}" {% if reagent.location|string == i|string %}selected{% endif %}>{{ i }}번 시약장</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="misc">비고</label>
+        <select id="misc" name="misc">
+            <option value="" {% if not reagent.misc %}selected{% endif %}></option>
+            <option value="독극물" {% if reagent.misc == '독극물' %}selected{% endif %}>독극물</option>
+        </select>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit">변경사항 저장</button>
+        <a href="/delete/{{ reagent._id }}" class="btn-secondary" style="text-decoration: none;">시약 삭제</a>
+        <a href="/search" class="btn-secondary" style="text-decoration: none;">취소</a>
+    </div>
+</form>
+{% endblock %}

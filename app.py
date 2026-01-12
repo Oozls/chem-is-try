@@ -1,0 +1,318 @@
+from flask import Flask, render_template, request, redirect, flash, url_for, send_file
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+from flask_pymongo import PyMongo
+from pymongo import MongoClient
+from dotenv import load_dotenv
+from os import getenv
+from bson.objectid import ObjectId
+from re import match, search
+from difflib import SequenceMatcher
+from waitress import serve
+from pandas import DataFrame, ExcelWriter
+from io import BytesIO
+
+load_dotenv()
+
+
+
+
+app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['SECRET_KEY'] = getenv('SECRET_KEY')
+app.config['SESSION_TYPE'] = 'mongodb'
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_message = None
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    flash('로그인이 필요합니다.','error')
+    return redirect(url_for('login'))
+
+class User(UserMixin):
+    def __init__(self, id, username, password, admin):
+        self.id = id
+        self.username = username
+        self.password = password
+        self.admin = admin
+
+    def __repr__(self):
+        r = {
+            'user_id': self.id,
+            'username': self.username,
+            'password': self.password,
+            'admin': self.admin,
+        }
+        return str(r)
+    
+    def is_active(self):
+        return True
+    
+    def is_admin(self):
+        return self.admin
+
+    def get_id(self):
+        return self.id
+
+    def get_name(self):
+        return self.username
+    
+
+
+
+mongo = PyMongo()
+client = MongoClient(getenv("DB_CONNECT"), 27017)
+db = client['chemistry']
+user_collection = db['user']
+reagent_collection = db['reagent']
+
+
+
+
+@login_manager.user_loader
+def user_loader(user_id):
+    target_user = user_collection.find_one({"_id":ObjectId(str(user_id))})
+    target_user['id'] = str(target_user.pop('_id'))
+    return User(**target_user)
+
+
+
+
+@app.route('/')
+def main_page():
+    return render_template('main.html')
+
+
+
+
+@app.route('/login', methods=["GET", "POST"])
+def login_page():
+    if current_user.is_authenticated: return redirect('/')
+    if request.method == "POST":
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        target_user = user_collection.find_one({'username':username, 'password':password})
+        if target_user:
+            target_user['id'] = str(target_user.pop('_id'))
+            login_user(User(**target_user))
+            flash("로그인 되었습니다.", "success")
+            return redirect('/')
+        flash("해당 사용자가 존재하지 않습니다. 정보를 바르게 기입해주세요.", 'error')
+        return redirect('/login')
+    return render_template('login.html')
+
+
+
+
+@app.route('/signup', methods=["GET", "POST"])
+def signup_page():
+    if current_user.is_authenticated: return redirect('/')
+    if request.method == "POST":
+        username = request.form.get('username')
+        password = request.form.get('password')
+        password_confirm = request.form.get('password_confirm')
+        
+        if not bool(match(r'^[가-힣]{2,4}$', username)):
+            flash('올바른 형식의 이름이 아닙니다.', 'error')
+            return redirect('/signup')
+        elif user_collection.find_one({'username':username}):
+            flash('이미 존재하는 사용자 이름입니다.', 'error')
+            return redirect('/signup')
+        elif password_confirm != password:
+            flash('비밀번호가 일치하지 않습니다.', 'error')
+            return redirect('/signup')
+
+        user_data = {
+            'username':username,
+            'password':password,
+            'admin': False
+        }
+        user_collection.insert_one(user_data)
+        target_user = user_collection.find_one(user_data)
+        
+        target_user['id'] = str(target_user.pop('_id'))
+        login_user(User(**target_user))
+        flash("회원 가입이 정상적으로 완료되었습니다.", 'success')
+        return redirect('/')
+    return render_template('signup.html')
+
+
+
+
+@app.route('/logout')
+@login_required
+def logout_page():
+    logout_user()
+    flash("로그아웃 되었습니다.", "success")
+    return redirect('/')
+
+
+
+
+@app.route('/search')
+def search_page():
+    name = request.args.get('name')
+    if name: name = name.lower()
+    category = request.args.get('category')
+    amount = request.args.get('amount')
+    left_amount = request.args.get('left_amount')
+    location = request.args.get('location')
+    misc = request.args.get('misc')
+
+    keyword = {}
+    if category or amount or left_amount or location or misc:
+        if category != "all": keyword['category'] = category
+        if amount != "": keyword['amount'] = amount
+        if left_amount != "": keyword['left_amount'] = left_amount
+        if location != "all": keyword['location'] = location
+        if misc != "all": keyword['misc'] = misc
+
+    reagents = list(reagent_collection.find(keyword))
+    reagents.sort(key=lambda x : int(x['location']))
+
+    results = []
+
+    if name and name != "":
+        for item in reagents:
+            match = search(r"^(.*?)\(([^,)]+)(?:,\s*([^)]+))?\)$", item['name'])
+            korean_name = match.group(1).strip()
+            english_name = match.group(2).strip().lower()
+            formula = match.group(3).strip() if match.group(3) else None
+
+            matcher1 = SequenceMatcher(None, name, korean_name)
+            matcher2 = SequenceMatcher(None, name, english_name)
+            matcher3 = SequenceMatcher(None, name, formula)
+            matcher4 = SequenceMatcher(None, name, item['name'.lower()])
+            similarity1 = matcher1.ratio()
+            similarity2 = matcher2.ratio()
+            similarity3 = matcher3.ratio() if formula else 0
+            similarity4 = matcher4.ratio()
+            
+            threshold = 0.7
+            if similarity1 >= threshold or similarity2 >= threshold or similarity3 >= threshold or similarity4 >= threshold or name.lower() in item['name'].lower(): results.append(item)
+    else: results = reagents
+
+    return render_template('search.html', reagents=results)
+
+
+
+
+@app.route('/register', methods=["GET", "POST"])
+@login_required
+def register_page():
+    if not current_user.is_admin():
+        flash('권한이 없습니다.', 'error')
+        return redirect('/')
+    if request.method == "POST":
+        name = request.form.get('name')
+        category = request.form.get('category')
+        amount = request.form.get('amount')
+        left_amount = request.form.get('left_amount')
+        location = request.form.get('location')
+        misc = request.form.get('misc')
+
+        reagents = reagent_collection.find()
+        for item in reagents:
+            match = search(r"(.*?)\((.*?)\)", item['name'])
+            korean_name = match.group(1).strip()
+            english_name = match.group(2).strip().lower()     
+            if korean_name in name or english_name in name:
+                flash(f'유사한 시약({item['name']})이 이미 등록되어 있습니다.', 'info')
+
+        reagent_data = {'name':name, 'category':category, 'amount':amount, 'left_amount':left_amount, 'location':location, 'misc':misc}
+        reagent_collection.insert_one(reagent_data)
+
+        flash('시약이 등록되었습니다.', 'success')
+        return redirect('/register')
+    return render_template('register.html')
+
+
+
+
+@app.route('/edit/<id>', methods=["GET", "POST"])
+@login_required
+def edit_page(id):
+    if not current_user.is_admin():
+        flash('권한이 없습니다.', 'error')
+        return redirect('/')
+    
+    reagent = reagent_collection.find_one({'_id':ObjectId(id)})
+
+    if not reagent:
+        flash('등록되지 않은 시약입니다.', 'error')
+        return redirect('/search')
+
+    if request.method == 'GET': return render_template('edit.html', reagent=reagent)
+    
+    name = request.form.get('name')
+    category = request.form.get('category')
+    amount = request.form.get('amount')
+    left_amount = request.form.get('left_amount')
+    location = request.form.get('location')
+    misc = request.form.get('misc')
+
+    reagent_data = {'name':name, 'category':category, 'amount':amount, 'left_amount':left_amount, 'location':location, 'misc':misc}
+    reagent_collection.update_one({'_id':ObjectId(id)}, {'$set':reagent_data})
+
+    flash('시약 정보를 수정하였습니다.', 'success')
+    return redirect('/search')
+
+
+
+
+@app.route('/delete/<id>')
+@login_required
+def delete_page(id):
+    if not current_user.is_admin():
+        flash('권한이 없습니다.', 'error')
+        return redirect('/')
+    
+    reagent = reagent_collection.find_one({'_id':ObjectId(id)})
+    if not reagent:
+        flash('등록되지 않은 시약입니다.', 'error')
+        return redirect('/search')
+    
+    reagent_collection.delete_one({'_id':ObjectId(id)})
+    flash('시약을 삭제했습니다.', 'success')
+    return redirect('/search')
+
+
+
+
+@app.route('/download')
+def download_page():
+    data = list(reagent_collection.find({}, {'_id': 0}))
+
+    df = DataFrame(data)
+
+    column_order = ['name', 'category', 'amount', 'left_amount', 'location', 'misc']
+    df = df[column_order]
+    df.rename(columns={
+        'name': '시약',
+        'category': '구분',
+        'amount': '수량',
+        'left_amount': '잔량',
+        'location': '밀폐 시약장 번호',
+        'misc': '비고'
+    }, inplace=True)
+
+    output = BytesIO()
+    with ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='시약')
+    
+    output.seek(0)
+
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='청원고등학교 시약.xlsx'
+    )
+
+
+
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=8000, debug=True)

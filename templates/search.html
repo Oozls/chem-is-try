@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>🧪 시약 상세 검색</h2>
+
+<form action="/search" method="GET" class="search-form">
+    
+    <div class="form-group">
+        <label for="name">시약 이름&#40;한글명, 영문명, 화학식&#41;</label>
+        <input type="text" id="name" name="name" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+        <label for="category">구분</label>
+        <select id="category" name="category">
+            <option value="all">전체</option>
+            <option value=""></option>
+            <option value="유기물">유기물</option>
+            <option value="무기물">무기물</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="location">밀폐 시약장 위치</label>
+        <select id="location" name="location">
+            <option value="all">전체 위치</option>
+            {% for i in range(1, 9) %}
+            <option value="{{ i }}">{{ i }}번 시약장</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="misc">비고</label>
+        <select id="misc" name="misc">
+            <option value="all">전체</option>
+            <option value=""></option>
+            <option value="독극물">독극물</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="amount">수량</label>
+        <input type="number" id="amount" name="amount" autocomplete="off">
+    </div>
+
+    <div class="form-group">
+        <label for="left_amount">잔량</label>
+        <input type="text" id="left_amount" name="left_amount" autocomplete="off">
+    </div>
+
+    <div class="search-btn-container">
+        <button type="submit">🔍 검색하기</button>
+    </div>
+</form>
+
+<hr style="margin: 40px 0; border: 0; border-top: 2px dashed #ddd;">
+
+<h3>검색 결과</h3>
+<table>
+    <thead>
+        <tr>
+            <th>이름</th>
+            <th>구분</th>
+            <th>수량</th>
+            <th>잔량</th>
+            <th>밀폐 시약장 번호</th>
+            <th>비고</th>
+            {% if current_user.is_authenticated %}
+            {% if current_user.is_admin() %}
+            <th>수정</th>
+            {% endif %}
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% if reagents %}
+            {% for item in reagents %}
+            <tr>
+                <td style="font-weight: bold;">{{ item.name }}</td>
+                
+                <td>{{ item.category }}</td>
+                
+                <td>{{ item.amount }}</td>
+                
+                <td>{{ item.left_amount }}</td>
+                
+                <td>
+                    {{ item.location }}
+                </td>
+                
+                <td>
+                    {% if item.misc == '독극물' %}
+                        <span style="color: #d9534f; font-weight: bold;">독극물</span>
+                    {% else %}
+                        <span style="color: #888;">-</span>
+                    {% endif %}
+                </td>
+
+                {% if current_user.is_authenticated %}
+                {% if current_user.is_admin() %}
+                <td>
+                    <a href="/edit/{{ item._id }}" style="text-decoration: none;">✏️</a>
+                </td>
+                {% endif %}
+                {% endif %}
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 30px; color: #666;">
+                    조건에 맞는 시약이 없거나 검색 결과가 없습니다.
+                </td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endblock %}
