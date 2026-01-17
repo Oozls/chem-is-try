@@ -1,13 +1,81 @@
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraLight.woff2') format('woff2');
+    font-weight: 200;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-display: swap;
+}
+
 :root {
     --primary-color: #008080; /* Teal: 실험실 느낌 */
     --secondary-color: #f4f4f4;
     --text-color: #333;
     --white: #ffffff;
     --danger-color: #d9534f;
+    --gray-color: #6c757d;
+}
+
+* {
+    box-sizing: border-box; /* 모든 요소 패딩 포함 계산 */
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Pretendard', sans-serif;
     margin: 0;
     padding: 0;
     background-color: var(--secondary-color);
@@ -93,33 +161,63 @@ input, select, textarea {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    box-sizing: border-box; /* 패딩 포함 계산 */
+    font-family: 'Pretendard'; /* 폰트 통일 */
 }
 
-button, .btn-secondary {
+/* --- 버튼 스타일 통합 수정 --- */
+/* 모든 버튼(button 태그 및 버튼 클래스)의 기본 외형을 강제로 통일합니다. */
+button, 
+.btn-primary, 
+.btn-secondary, 
+.btn-danger {
+    display: inline-flex;       /* 중앙 정렬을 위해 flex 사용 */
+    align-items: center;
+    justify-content: center;
+    height: 45px;               /* 높이를 명시적으로 고정하여 들쑥날쑥함 방지 */
+    padding: 0 20px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: 'Pretendard';  /* 폰트 에러 방지 */
+    cursor: pointer;
+    border: none;
+    text-decoration: none;      /* a태그 밑줄 제거 */
+    transition: all 0.3s ease;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+/* 기본 button 태그 (클래스가 없을 때 대비) */
+button {
     background-color: var(--primary-color);
     color: var(--white);
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 1rem;
-    border-radius: 4px;
-    transition: background 0.3s;
 }
 
 button:hover {
     background-color: #006666;
 }
 
-button.danger {
+/* 클래스별 색상 지정 */
+.btn-primary {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+.btn-primary:hover { background-color: #006666; }
+
+.btn-secondary {
+    background-color: var(--gray-color);
+    color: var(--white);
+}
+.btn-secondary:hover { background-color: #5a6268; }
+
+.btn-danger {
     background-color: var(--danger-color);
+    color: var(--white);
 }
+.btn-danger:hover { background-color: #c9302c; }
 
-button.danger:hover {
-    background-color: #c9302c;
-}
 
-/* 테이블 스타일 (검색, 삭제 페이지용) */
+/* 테이블 스타일 */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -144,7 +242,7 @@ tr:nth-child(even) {
     background-color: #f9f9f9;
 }
 
-/* --- Toast 팝업 스타일 추가 --- */
+/* --- Toast 팝업 --- */
 #toast-container {
     position: fixed;
     bottom: 20px; 
@@ -156,7 +254,6 @@ tr:nth-child(even) {
 }
 
 .toast {
-    background-color: #333;
     color: #fff;
     padding: 15px 25px;
     border-radius: 5px;
@@ -165,67 +262,119 @@ tr:nth-child(even) {
     align-items: center;
     justify-content: space-between;
     min-width: 250px;
-    animation: slideIn 0.5s ease, fadeOut 0.5s ease 7s forwards; 
-    /* 3초 후에 fadeOut 애니메이션 실행하여 사라짐 */
+    animation: slideIn 0.5s ease, fadeOut 0.5s ease 7s forwards;
 }
 
-/* 메시지 종류별 색상 (Flask에서 category로 제어) */
-.toast.success {
-    background-color: #008080; /* 성공: 메인 테마 색상 (Teal) */
-    border-left: 5px solid #004d4d;
-}
+.toast.success { background-color: #008080; border-left: 5px solid #004d4d; }
+.toast.error { background-color: #d9534f; border-left: 5px solid #a94442; }
+.toast.info { background-color: #5bc0de; border-left: 5px solid #31b0d5; }
 
-.toast.error {
-    background-color: #d9534f; /* 에러: 빨간색 */
-    border-left: 5px solid #a94442;
-}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
 
-.toast.info {
-    background-color: #5bc0de; /* 정보: 하늘색 */
-    border-left: 5px solid #31b0d5;
-}
-
-/* 애니메이션 정의 */
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; visibility: hidden; }
-}
-
-/* --- 상세 검색 페이지 전용 스타일 --- */
+/* --- 상세 검색 --- */
 .search-form {
     display: grid;
-    /* 화면 너비에 따라 자동으로 열 개수 조절 (최소 200px) */
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
     background-color: #f8f9fa;
     padding: 20px;
     border-radius: 8px;
     border: 1px solid #e9ecef;
-    align-items: end; /* 라벨 높이가 달라도 입력창 하단 정렬 */
+    align-items: end;
 }
 
-/* 검색 버튼은 꽉 차게 */
 .search-btn-container {
-    grid-column: 1 / -1; /* 전체 열 차지 */
+    grid-column: 1 / -1;
     text-align: center;
     margin-top: 10px;
 }
 
-.search-btn-container button {
-    width: 100%;
-    max-width: 300px;
-    padding: 12px;
-    font-size: 1.1rem;
-    font-weight: bold;
+/* --- 디테일 페이지 --- */
+.detail-container {
+    background-color: #fff;
+    padding: 20px;
 }
 
-.form-actions {
+.compact-header {
     display: flex;
-    gap: 10px;
-    margin-top: 20px;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.compact-header h2 {
+    margin: 0;
+    border: none;
+    padding: 0;
+    font-size: 1.8rem;
+}
+
+.summary-bar {
+    display: flex;
+    align-items: center;
+    background-color: #f1f8f8;
+    padding: 15px 20px;
+    border-radius: 6px;
+    justify-content: space-around;
+    margin-bottom: 30px;
+}
+
+.summary-item { text-align: center; flex: 1; }
+.summary-item .label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; }
+.summary-item .value { font-size: 1.1rem; font-weight: bold; color: #333; }
+.summary-item .value.highlight { color: var(--primary-color); }
+
+.divider { width: 1px; height: 30px; background-color: #ddd; margin: 0 10px; }
+
+.custom-content-area {
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 200px;
+}
+
+.custom-content-area h3 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #ddd;
+    padding-bottom: 10px;
+}
+
+.custom-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+}
+.badge.category { background-color: #5bc0de; }
+.badge.danger { background-color: var(--danger-color); }
+
+/* --- 폼 액션 영역 (버튼 배치) --- */
+.form-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: flex-end; /* 오른쪽 정렬 */
+    align-items: center;
+    gap: 10px;                 /* 버튼 사이 간격 고정 */
+}
+
+.rg-name {
+    color: #444;
+    text-decoration: none;
+}
+
+.rg-name:hover {
+    text-decoration: underline;
 }

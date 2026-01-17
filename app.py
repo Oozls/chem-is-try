@@ -10,6 +10,7 @@ from difflib import SequenceMatcher
 from waitress import serve
 from pandas import DataFrame, ExcelWriter
 from io import BytesIO
+import requests
 
 load_dotenv()
 
@@ -151,6 +152,38 @@ def logout_page():
 
 
 
+def extract_chemical_info(text):
+    first_paren_idx = text.find('(')
+    last_paren_idx = text.rfind(')')
+    
+    if first_paren_idx == -1 or last_paren_idx == -1:
+        return {
+            "korean": text.strip(),
+            "english": [],
+            "formula": None
+        }
+
+    korean_name = text[:first_paren_idx].strip()
+
+    inner_content = text[first_paren_idx+1 : last_paren_idx]
+    
+    english_part = ""
+    formula = None
+
+    if ',' in inner_content:
+        parts = inner_content.rsplit(',', 1)
+        english_part = parts[0].strip()
+        formula = parts[1].strip()
+    else:
+        english_part = inner_content.strip()
+
+    if '&' in english_part:
+        english_names = [name.strip() for name in english_part.split('&')]
+    else:
+        english_names = [english_part]
+
+    return korean_name, english_names, formula
+
 @app.route('/search')
 def search_page():
     name = request.args.get('name')
@@ -170,28 +203,42 @@ def search_page():
         if misc != "all": keyword['misc'] = misc
 
     reagents = list(reagent_collection.find(keyword))
-    reagents.sort(key=lambda x : int(x['location']))
+    reagents.sort(key=lambda x : (int(x['location']), x['name']))
 
     results = []
 
     if name and name != "":
         for item in reagents:
-            match = search(r"^(.*?)\(([^,)]+)(?:,\s*([^)]+))?\)$", item['name'])
-            korean_name = match.group(1).strip()
-            english_name = match.group(2).strip().lower()
-            formula = match.group(3).strip() if match.group(3) else None
+            # it's so old school
+            # match = search(r"^(.*?)\(([^,)]+)(?:,\s*([^)]+))?\)$", item['name'])
+            # korean_name = match.group(1).strip()
+            # english_name = match.group(2).strip().lower()
+            # formula = match.group(3).strip() if match.group(3) else None
 
-            matcher1 = SequenceMatcher(None, name, korean_name)
-            matcher2 = SequenceMatcher(None, name, english_name)
-            matcher3 = SequenceMatcher(None, name, formula)
-            matcher4 = SequenceMatcher(None, name, item['name'.lower()])
-            similarity1 = matcher1.ratio()
-            similarity2 = matcher2.ratio()
-            similarity3 = matcher3.ratio() if formula else 0
-            similarity4 = matcher4.ratio()
+            # matcher1 = SequenceMatcher(None, name, korean_name)
+            # matcher2 = SequenceMatcher(None, name, english_name)
+            # matcher3 = SequenceMatcher(None, name, formula)
+            # matcher4 = SequenceMatcher(None, name, item['name'.lower()])
+
+            korean_name, english_names, formula = extract_chemical_info(item['name'])
+
+            def compare(text1, text2):
+                threshold = 0.7
+                similarity = SequenceMatcher(None, text1, text2).ratio()
+                if similarity >= threshold: return True
+                return False
+
+            ready = False
+            if name.lower() in item['name'].lower(): ready = True
+            elif compare(name.lower(), korean_name.lower()): ready = True
+            else:
+                if formula:
+                    if compare(name, formula): ready = True
+                if not ready:
+                    for english_name in english_names:
+                        if compare(name.lower(), english_name.lower()): ready = True
             
-            threshold = 0.7
-            if similarity1 >= threshold or similarity2 >= threshold or similarity3 >= threshold or similarity4 >= threshold or name.lower() in item['name'].lower(): results.append(item)
+            if ready: results.append(item)
     else: results = reagents
 
     return render_template('search.html', reagents=results)
@@ -212,21 +259,144 @@ def register_page():
         left_amount = request.form.get('left_amount')
         location = request.form.get('location')
         misc = request.form.get('misc')
+        cid = request.form.get('cid')
 
-        reagents = reagent_collection.find()
-        for item in reagents:
-            match = search(r"(.*?)\((.*?)\)", item['name'])
-            korean_name = match.group(1).strip()
-            english_name = match.group(2).strip().lower()     
-            if korean_name in name or english_name in name:
-                flash(f'유사한 시약({item['name']})이 이미 등록되어 있습니다.', 'info')
+        # reagents = reagent_collection.find()
+        # for item in reagents:
+        #     match = search(r"(.*?)\((.*?)\)", item['name'])
+        #     korean_name = match.group(1).strip()
+        #     english_name = match.group(2).strip().lower()     
+        #     if korean_name in name or english_name in name:
+        #         flash(f'유사한 시약({item['name']})이 이미 등록되어 있습니다.', 'info')
 
-        reagent_data = {'name':name, 'category':category, 'amount':amount, 'left_amount':left_amount, 'location':location, 'misc':misc}
+        reagent_data = {'name':name, 'category':category, 'amount':amount, 'left_amount':left_amount, 'location':location, 'misc':misc, 'cid':cid}
         reagent_collection.insert_one(reagent_data)
 
         flash('시약이 등록되었습니다.', 'success')
         return redirect('/register')
     return render_template('register.html')
+
+
+
+
+def pubview_ghs(cid):
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/{cid}/JSON?heading=Safety+and+Hazards"
+        
+    try:
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        data = response.json()
+
+        def find_ghs_section(sections):
+            for section in sections:
+                if section.get("TOCHeading") == "GHS Classification":
+                    return section
+                if "Section" in section:
+                    result = find_ghs_section(section["Section"])
+                    if result:
+                        return result
+            return None
+
+        root_sections = data.get("Record", {}).get("Section", [])
+        ghs_section = find_ghs_section(root_sections)
+
+        if not ghs_section:
+            return {"status": "success", "message": "GHS INFO NOT FOUND"}
+
+        result = {
+            "status": "success",
+            "pictograms": [],
+            "signal_word": "",
+            "hazard_statements": []
+        }
+
+        for info in ghs_section.get("Information", []):
+            name = info.get("Name")
+            
+            # 그림문자 (Pictograms)
+            if name == "Pictogram(s)":
+                for markup in info["Value"]["StringWithMarkup"][0].get("Markup", []):
+                    result["pictograms"].append(markup["URL"])
+            
+            # 신호어 (Signal Word)
+            elif name == "Signal":
+                result["signal_word"] = info["Value"]["StringWithMarkup"][0].get("String")
+            
+            # 유해위험 문구 (Hazard Statements)
+            elif name == "GHS Hazard Statements":
+                for item in info["Value"]["StringWithMarkup"]:
+                    result["hazard_statements"].append(item.get("String"))
+
+        return result
+
+    except requests.exceptions.Timeout:
+        return {"status": "error", "message": "TIMEOUT"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def pubview_cas(cid):
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/{cid}/JSON?heading=CAS"
+        
+    try:
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        data = response.json()
+
+        def find_cas_section(sections):
+            for section in sections:
+                if section.get("TOCHeading") == "CAS":
+                    return section
+                if "Section" in section:
+                    result = find_cas_section(section["Section"])
+                    if result:
+                        return result
+            return None
+
+        root_sections = data.get("Record", {}).get("Section", [])
+        cas_section = find_cas_section(root_sections)
+
+        if not cas_section:
+            return {"status": "success", "message": "CAS INFO NOT FOUND"}
+
+        result = {
+            "status": "success",
+            "cas": "",
+        }
+
+        infos = cas_section.get("Information", [])
+        infos.sort(key=lambda x: x["ReferenceNumber"])
+        cas = infos[0]["Value"]["StringWithMarkup"][0]["String"]
+        result['cas'] = cas
+
+        return result
+
+    except requests.exceptions.Timeout:
+        return {"status": "error", "message": "TIMEOUT"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.route('/reagent/<id>')
+def detail_page(id):
+    reagent = reagent_collection.find_one({'_id':ObjectId(id)})
+
+    if not reagent:
+        flash('등록되지 않은 시약입니다.', 'error')
+        return redirect('/search')
+
+    if 'cid' not in reagent.keys():
+        reagent_collection.update_one({'_id':ObjectId(id)},{'$set':{'cid':None}})
+        reagent['cid'] = ""
+    elif reagent['cid'] != "" and reagent['cid'] != None:
+        ghs = pubview_ghs(reagent['cid'])
+        cas = pubview_cas(reagent['cid'])
+        # if ghs['status'] == 'success' and cas['status'] == 'success':
+        ghs['pictograms'] = list(set(ghs['pictograms']))
+        ghs['hazard_statements'] = list(set(ghs['hazard_statements']))
+        reagent['ghs'] = ghs
+        reagent['cas'] = cas
+
+    return render_template('detail.html', reagent=reagent)
+
 
 
 
@@ -244,7 +414,10 @@ def edit_page(id):
         flash('등록되지 않은 시약입니다.', 'error')
         return redirect('/search')
 
-    if request.method == 'GET': return render_template('edit.html', reagent=reagent)
+    if request.method == 'GET':
+        if "cid" not in reagent.keys(): reagent['cid'] = ""
+        elif reagent['cid'] == "" or reagent['cid'] == None: reagent['cid'] = ""
+        return render_template('edit.html', reagent=reagent)
     
     name = request.form.get('name')
     category = request.form.get('category')
@@ -252,12 +425,14 @@ def edit_page(id):
     left_amount = request.form.get('left_amount')
     location = request.form.get('location')
     misc = request.form.get('misc')
+    cid = request.form.get('cid')
+    if cid.strip() == "": cid = None
 
-    reagent_data = {'name':name, 'category':category, 'amount':amount, 'left_amount':left_amount, 'location':location, 'misc':misc}
+    reagent_data = {'name':name, 'category':category, 'amount':amount, 'left_amount':left_amount, 'location':location, 'misc':misc, 'cid':cid}
     reagent_collection.update_one({'_id':ObjectId(id)}, {'$set':reagent_data})
 
     flash('시약 정보를 수정하였습니다.', 'success')
-    return redirect('/search')
+    return redirect(f'/reagent/{id}')
 
 
 
@@ -284,6 +459,7 @@ def delete_page(id):
 @app.route('/download')
 def download_page():
     data = list(reagent_collection.find({}, {'_id': 0}))
+    data.sort(key=lambda x : (int(x['location']), x['name']))
 
     df = DataFrame(data)
 
@@ -315,5 +491,5 @@ def download_page():
 
 
 if __name__ == "__main__":
-    #app.run(host='0.0.0.0', port=8000, debug=True)
+    # app.run(host='0.0.0.0', port=8000, debug=True)
     serve(app, host='0.0.0.0', port=8000)

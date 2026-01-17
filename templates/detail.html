@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="compact-header">
+        <div class="title-row">
+            <h2>{{ reagent.name }}</h2>
+            <span class="badge category">{{ reagent.category }}</span>
+            {% if reagent.misc == '독극물' %}
+                <span class="badge danger">독극물</span>
+            {% endif %}
+        </div>
+        <div class="meta-info">
+            <span>ID: {{ reagent._id }}</span>
+        </div>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-item">
+            <span class="label">위치</span>
+            <span class="value">{{ reagent.location }}번 시약장</span>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+            <span class="label">수량</span>
+            <span class="value">{{ reagent.amount }}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+            <span class="label">잔량</span>
+            <span class="value highlight">{{ reagent.left_amount }}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+            <span class="label">비고</span>
+            <span class="value">{{ reagent.misc if reagent.misc else '-' }}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+            <span class="label">Cas No.</span>
+            <span class="value">
+                {% if reagent.cas %}
+                    {{ reagent.cas.cas if reagent.cas.cas else reagent.cas.message }}
+                {% else %}
+                -
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="custom-content-area">
+        <h3>📋 상세 정보 &#40;GHS 경고표지&#41;</h3>
+        <div class="custom-body">
+            {% if reagent.ghs %}
+                <span>{{ reagent.ghs.message if reagent.ghs.message }}</span>
+                <div>
+                {% for img in reagent.ghs.pictograms %}
+                    <img src="{{ img }}" style="width: 5rem;" alt="">
+                {% endfor %}
+                </div>
+                {% for msg in reagent.ghs.hazard_statements %}
+                    <span>{{ msg }}</span>
+                {% endfor %}
+            {% else %}
+                <p style="color: #888;">등록된 추가 상세 정보가 없습니다.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="form-actions" style="margin-top: 30px; justify-content: flex-end;">
+        <a href="/search" class="btn-secondary" style="text-decoration: none;">목록</a>
+        
+        {% if current_user.is_authenticated and current_user.is_admin() %}
+            <a href="/edit/{{ reagent._id }}" class="btn-primary" style="text-decoration: none;">수정</a>
+            <a href="/delete/{{ reagent._id }}" class="btn-danger" style="text-decoration: none;">삭제</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
