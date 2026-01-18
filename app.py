@@ -5,12 +5,12 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from os import getenv
 from bson.objectid import ObjectId
-from re import match, search
+from re import match
 from difflib import SequenceMatcher
 from waitress import serve
 from pandas import DataFrame, ExcelWriter
 from io import BytesIO
-import requests
+import requests, json
 
 load_dotenv()
 
@@ -392,8 +392,26 @@ def detail_page(id):
         # if ghs['status'] == 'success' and cas['status'] == 'success':
         ghs['pictograms'] = list(set(ghs['pictograms']))
         ghs['hazard_statements'] = list(set(ghs['hazard_statements']))
-        reagent['ghs'] = ghs
+        # reagent['ghs'] = ghs
         reagent['cas'] = cas
+
+        with open('static/json/ghs.json', 'r') as f:
+            ghs_translation = json.load(f)
+        
+        if ghs['status'] == 'success':
+            msgs = []
+            for msg in ghs['hazard_statements']:
+                if msg[0] == 'H':
+                    space_index = msg.find(' ')
+                    code = msg[:space_index].strip().replace(':', '')
+                    
+                    if code in ghs_translation.keys(): msgs.append(f"{code} : {ghs_translation[code]}")
+                    else: msgs.append(msg)
+                else: msgs.append(msg)
+            ghs['hazard_statements'] = msgs
+            ghs['hazard_statements'] = list(set(ghs['hazard_statements']))
+            ghs['hazard_statements'].sort(key=lambda x: x[:4])
+            reagent['ghs'] = ghs
 
     return render_template('detail.html', reagent=reagent)
 
@@ -491,5 +509,5 @@ def download_page():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=8000, debug=True)
-    serve(app, host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8000, debug=True)
+    # serve(app, host='0.0.0.0', port=8000)

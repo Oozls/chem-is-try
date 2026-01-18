@@ -378,3 +378,8 @@ tr:nth-child(even) {
 .rg-name:hover {
     text-decoration: underline;
 }
+
+.meta-info span {
+    color: #666;
+    font-size: 0.8rem;
+}
