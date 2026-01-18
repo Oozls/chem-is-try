@@ -54,13 +54,17 @@
             {% if reagent.ghs %}
                 <span>{{ reagent.ghs.message if reagent.ghs.message }}</span>
                 <div>
-                {% for img in reagent.ghs.pictograms %}
-                    <img src="{{ img }}" style="width: 5rem;" alt="">
-                {% endfor %}
+                    {% if reagent.ghs.pictograms %}
+                        {% for img in reagent.ghs.pictograms %}
+                            <img src="{{ img }}" style="width: 5rem;" alt="">
+                        {% endfor %}
+                    {% endif %}
                 </div>
-                {% for msg in reagent.ghs.hazard_statements %}
-                    <span>{{ msg }}</span>
-                {% endfor %}
+                {% if reagent.ghs.hazard_statements %}
+                    {% for msg in reagent.ghs.hazard_statements %}
+                        <span>{{ msg }}</span>
+                    {% endfor %}
+                {% endif %}
             {% else %}
                 <p style="color: #888;">등록된 추가 상세 정보가 없습니다.</p>
             {% endif %}

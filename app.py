@@ -389,16 +389,16 @@ def detail_page(id):
     elif reagent['cid'] != "" and reagent['cid'] != None:
         ghs = pubview_ghs(reagent['cid'])
         cas = pubview_cas(reagent['cid'])
-        # if ghs['status'] == 'success' and cas['status'] == 'success':
-        ghs['pictograms'] = list(set(ghs['pictograms']))
-        ghs['hazard_statements'] = list(set(ghs['hazard_statements']))
+
+        if 'pictograms' in ghs.keys(): ghs['pictograms'] = list(set(ghs['pictograms']))
+        if 'hazard_statements' in ghs.keys(): ghs['hazard_statements'] = list(set(ghs['hazard_statements']))
         # reagent['ghs'] = ghs
         reagent['cas'] = cas
 
         with open('static/json/ghs.json', 'r') as f:
             ghs_translation = json.load(f)
         
-        if ghs['status'] == 'success':
+        if ghs['status'] == 'success' and 'hazard_statements' in ghs.keys():
             msgs = []
             for msg in ghs['hazard_statements']:
                 if msg[0] == 'H':
@@ -509,5 +509,5 @@ def download_page():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=8000, debug=True)
-    serve(app, host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8000, debug=True)
+    # serve(app, host='0.0.0.0', port=8000)
