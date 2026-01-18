@@ -7,6 +7,7 @@
 <form action="/edit/{{ reagent._id }}" method="POST">
     <div class="form-group">
         <label for="name">시약</label>
+        <span class="standard">ex: 한글명&#40;영문명 / 화학식&#41; 또는 한글명&#40;영문명&#41; 또는 한글명&#40;영문명1 & 영문명2&#41; 등</span>
         <input type="text" id="name" name="name" value="{{ reagent.name }}" autocomplete="off" required>
     </div>
 
@@ -33,7 +34,7 @@
         <label for="location">밀폐 시약장 번호</label>
         <select id="location" name="location">
             {% for i in range(1, 9) %}
-                <option value="{{ i }}" {% if reagent.location|string == i|string %}selected{% endif %}>{{ i }}번 시약장</option>
+                <option value="{{ i }}" {% if reagent.location|string == i|string %}selected{% endif %}>{{ i }}</option>
             {% endfor %}
         </select>
     </div>
@@ -48,6 +49,7 @@
 
     <div class="form-group">
         <label for="name">CID</label>
+        <span class="standard">PubChem에 등록된 시약의 Compound CID 입력</span>
         <input type="text" id="cid" name="cid" value="{{ reagent.cid }}" autocomplete="off">
     </div>
 

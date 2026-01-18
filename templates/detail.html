@@ -68,6 +68,9 @@
             {% else %}
                 <p style="color: #888;">등록된 추가 상세 정보가 없습니다.</p>
             {% endif %}
+            {% if reagent.cid %}
+            <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ reagent.cid }}" class="pubchem-link" target="_blank">미국 국립 의학 도서관 PubChem ↵</a>
+            {% endif %}
         </div>
     </div>
 

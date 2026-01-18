@@ -79,6 +79,11 @@
             <tr>
                 <td style="font-weight: bold;">
                     <a href="/reagent/{{ item._id }}" class="rg-name">{{ item.name }}</a>
+                    {% if item.cid and current_user.is_authenticated %}
+                    {% if current_user.is_admin() %}
+                    <br/><span style="font-size: 0.8rem; color: #777; font-weight: 400;">CID: {{ item.cid }}</span>
+                    {% endif %}
+                {% endif %}
                 </td>
                 
                 <td>{{ item.category }}</td>

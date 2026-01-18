@@ -170,8 +170,8 @@ def extract_chemical_info(text):
     english_part = ""
     formula = None
 
-    if ',' in inner_content:
-        parts = inner_content.rsplit(',', 1)
+    if '/' in inner_content:
+        parts = inner_content.rsplit('/', 1)
         english_part = parts[0].strip()
         formula = parts[1].strip()
     else:

@@ -5,6 +5,7 @@
 <form action="/register" method="POST">
     <div class="form-group">
         <label for="name">시약</label>
+        <span class="standard">ex: 한글명&#40;영문명 / 화학식&#41; 또는 한글명&#40;영문명&#41; 또는 한글명&#40;영문명1 & 영문명2&#41; 등</span>
         <input type="text" id="name" name="name" autocomplete="off" required>
     </div>
     <div class="form-group">
@@ -45,6 +46,7 @@
     </div>
     <div class="form-group">
         <label for="name">CID</label>
+        <span class="standard">PubChem에 등록된 시약의 Compound CID 입력</span>
         <input type="text" id="cid" name="cid" autocomplete="off">
     </div>
     <button type="submit">등록하기</button>

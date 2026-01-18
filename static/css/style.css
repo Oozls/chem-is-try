@@ -370,16 +370,22 @@ tr:nth-child(even) {
     gap: 10px;                 /* 버튼 사이 간격 고정 */
 }
 
-.rg-name {
+.rg-name, .pubchem-link {
     color: #444;
     text-decoration: none;
 }
 
-.rg-name:hover {
+.rg-name:hover, .pubchem-link:hover {
     text-decoration: underline;
 }
 
-.meta-info span {
+.pubchem-link {
+    color: #555;
+    font-weight: bold;
+    padding-top: 0.5rem;
+}
+
+.meta-info span, .standard {
     color: #666;
     font-size: 0.8rem;
 }
