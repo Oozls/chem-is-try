@@ -1,14 +1,14 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, send_file
+from flask import Flask, render_template, request, redirect, flash, url_for, send_file, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from flask_pymongo import PyMongo
-from pymongo import MongoClient
+from pymongo import MongoClient, InsertOne
 from dotenv import load_dotenv
 from os import getenv
 from bson.objectid import ObjectId
 from re import match
 from difflib import SequenceMatcher
 from waitress import serve
-from pandas import DataFrame, ExcelWriter
+import pandas as pd
 from io import BytesIO
 import requests, json
 
@@ -479,9 +479,9 @@ def download_page():
     data = list(reagent_collection.find({}, {'_id': 0}))
     data.sort(key=lambda x : (int(x['location']), x['name']))
 
-    df = DataFrame(data)
+    df = pd.DataFrame(data)
 
-    column_order = ['name', 'category', 'amount', 'left_amount', 'location', 'misc']
+    column_order = ['name', 'category', 'amount', 'left_amount', 'location', 'misc', 'cid']
     df = df[column_order]
     df.rename(columns={
         'name': '시약',
@@ -489,11 +489,12 @@ def download_page():
         'amount': '수량',
         'left_amount': '잔량',
         'location': '밀폐 시약장 번호',
-        'misc': '비고'
+        'misc': '비고',
+        'cid': "CID"
     }, inplace=True)
 
     output = BytesIO()
-    with ExcelWriter(output, engine='openpyxl') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='시약')
     
     output.seek(0)
@@ -504,6 +505,96 @@ def download_page():
         as_attachment=True,
         download_name='청원고등학교 시약.xlsx'
     )
+
+
+
+
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload_file():
+    if not current_user.is_admin():
+        flash('권한이 없습니다.', 'error')
+        return redirect('/')
+    
+    if request.method == 'POST':
+        file = request.files.get('file')
+        if not file or file.filename == '':
+            flash('파일을 선택해주세요.', 'error')
+            return redirect(request.url)
+
+        if file and file.filename.endswith(('.xlsx', '.xls')):
+            try:
+                df = pd.read_excel(file)
+                
+                df = df.fillna('')
+
+                col_map = {
+                    '시약': 'name',
+                    '구분': 'category',
+                    '수량': 'amount',
+                    '잔량': 'left_amount',
+                    '밀폐 시약장 번호': 'location',
+                    '비고': 'misc',
+                    'CID': 'cid'
+                }
+                
+                df.rename(columns=col_map, inplace=True)
+
+                if 'name' in df.columns:
+                    df = df[df['name'] != '']
+                
+                valid_columns = ['name', 'category', 'amount', 'left_amount', 'location', 'misc', 'cid']
+                existing_cols = [c for c in valid_columns if c in df.columns]
+                
+                reagents_list = df[existing_cols].to_dict('records')
+
+                if not reagents_list:
+                    flash('등록할 데이터가 없거나 형식이 올바르지 않습니다.', 'error')
+                    return redirect(request.url)
+
+                session['preview_data'] = reagents_list
+                flash(f'총 {len(reagents_list)}개의 시약이 인식되었습니다. 아래 목록을 확인 후 등록 버튼을 눌러주세요.', 'info')
+                
+                return render_template('upload.html', preview=reagents_list)
+
+            except Exception as e:
+                flash(f'파일 처리 중 오류가 발생했습니다: {str(e)}', 'error')
+                return redirect(request.url)
+        else:
+            flash('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.', 'error')
+            return redirect(request.url)
+    
+    session.pop('preview_data', None)
+    return render_template('upload.html', preview=None)
+
+@app.route('/upload/confirm', methods=['POST'])
+def save_upload():
+    reagents_list = session.get('preview_data')
+    mode = request.form.get('mode')
+
+    if not reagents_list:
+        flash('저장할 데이터가 만료되었습니다. 다시 업로드해주세요.', 'error')
+        return redirect('/upload')
+
+    try:
+        if mode == 'replace':
+            reagent_collection.delete_many({})
+            flash('기존 데이터를 모두 삭제했습니다.', 'info')
+
+        operations = [InsertOne(item) for item in reagents_list]
+        
+        if operations:
+            result = reagent_collection.bulk_write(operations)
+            flash(f'성공적으로 {result.inserted_count}개의 시약이 등록되었습니다.', 'success')
+        else:
+            flash('등록할 데이터가 없습니다.', 'info')
+
+        session.pop('preview_data', None)
+        return redirect('/search')
+
+    except Exception as e:
+        flash(f'DB 저장 중 오류가 발생했습니다: {str(e)}', 'error')
+        return redirect('/upload')
 
 
 

@@ -10,11 +10,12 @@
     <nav>
         <a href="/" class="logo">🧪 Chem-is-try</a>
         <ul>
-            <li><a href="/download">시약 엑셀 파일 다운로드</a></li>
+            <li><a href="/download" style="letter-spacing: -1px;">시약 엑셀 파일 다운로드</a></li>
             <li><a href="/search">시약 검색</a></li>
             {% if current_user.is_authenticated %}
                 {% if current_user.is_admin() %}
                 <li><a href="/register">시약 등록</a></li>
+                <li><a href="/upload" style="letter-spacing: -1px;">시약 엑셀 파일 등록</a></li>
                 {% endif %}
                 <li><a href="/logout">로그아웃</a></li>
             {% else %}

@@ -36,9 +36,9 @@
             <span class="value">{{ reagent.misc if reagent.misc else '-' }}</span>
         </div>
         <div class="divider"></div>
-        <div class="summary-item">
+        <div class="summary-item" style="max-width: 200px; overflow: auto;">
             <span class="label">Cas No.</span>
-            <span class="value">
+            <span class="value" style="letter-spacing: -1px;">
                 {% if reagent.cas %}
                     {{ reagent.cas.cas if reagent.cas.cas else reagent.cas.message }}
                 {% else %}

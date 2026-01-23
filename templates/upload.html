@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 100%; margin: 0 auto;">
+    <h2>📂 시약 일괄 등록 (Excel)</h2>
+    
+    {% if not preview %}
+    <div class="upload-box">
+        <p class="upload-guide">
+            엑셀 파일(.xlsx)을 업로드하여 여러 시약을 한 번에 등록할 수 있습니다.<br>
+            <span class="standard">엑셀 헤더 예시: 시약명, 구분, 수량, 잔량, 위치, 비고, CID</span>
+        </p>
+        
+        <form action="/upload" method="POST" enctype="multipart/form-data" style="display: inline-block; width: 100%;">
+            <div class="form-group">
+                <input type="file" name="file" accept=".xlsx, .xls" required class="file-input">
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">
+                📤 엑셀 파일 분석하기
+            </button>
+        </form>
+        
+        <div style="margin-top: 20px;">
+            <a href="/search" class="btn-secondary" style="width: 100%;">취소하고 돌아가기</a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if preview %}
+    <div class="preview-container">
+        
+        <div class="control-panel">
+            <div class="status-msg">
+                총 <span style="color: var(--primary-color); font-weight: bold;">{{ preview|length }}</span>개의 시약 대기 중
+            </div>
+            
+            <form action="/upload/confirm" method="POST" id="confirmForm" style="margin: 0; max-width: none; flex: 1;">
+                
+                <div class="option-group">
+                    <label class="radio-label">
+                        <input type="radio" name="mode" value="append" checked onchange="toggleWarning()">
+                        <span>➕ 추가 등록 (기존 데이터 유지)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="mode" value="replace" onchange="toggleWarning()">
+                        <span>🔄 덮어쓰기 (전체 삭제 후 등록)</span>
+                    </label>
+                </div>
+
+                <div id="warning-msg" class="warning-box" style="display: none;">
+                    ⚠️ <b>주의:</b> '덮어쓰기'를 선택하면 현재 저장된 <u>모든 시약 데이터가 영구적으로 삭제</u>되고 업로드한 데이터로 교체됩니다. 이 작업은 되돌릴 수 없습니다.
+                </div>
+
+                <div class="action-buttons">
+                    <a href="/upload" class="btn-secondary">재업로드</a>
+                    <button type="submit" class="btn-primary">💾 실행 및 저장</button>
+                </div>
+            </form>
+        </div>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px dashed #ddd;">
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">No.</th>
+                        <th>이름</th>
+                        <th>구분</th>
+                        <th>수량</th>
+                        <th>잔량</th>
+                        <th>위치</th>
+                        <th>비고</th>
+                        <th>CID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in preview %}
+                    <tr>
+                        <td style="text-align: center;">{{ loop.index }}</td>
+                        <td style="font-weight: bold;">{{ item.name }}</td>
+                        <td>{{ item.category }}</td>
+                        <td>{{ item.amount }}</td>
+                        <td>{{ item.left_amount }}</td>
+                        <td>{{ item.location }}</td>
+                        <td>
+                            {% if item.misc == '독극물' %}
+                                <span style="color: #d9534f; font-weight: bold;">독극물</span>
+                            {% else %}
+                                {{ item.misc }}
+                            {% endif %}
+                        </td>
+                        <td>{{ item.cid }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function toggleWarning() {
+            const radios = document.getElementsByName('mode');
+            const warningBox = document.getElementById('warning-msg');
+            
+            for (let i = 0; i < radios.length; i++) {
+                if (radios[i].checked && radios[i].value === 'replace') {
+                    warningBox.style.display = 'block';
+                    return;
+                }
+            }
+            warningBox.style.display = 'none';
+        }
+    </script>
+    {% endif %}
+</div>
+{% endblock %}
