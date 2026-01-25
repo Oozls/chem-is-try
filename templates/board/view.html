@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    
+    <div style="margin-bottom: 20px;">
+        <h2 style="margin-bottom: 10px;">
+            <span class="badge" style="background-color: var(--primary-color); font-size: 1rem; vertical-align: middle;">{{ post.category }}</span>
+            <span style="vertical-align: middle;">{{ post.title }}</span>
+        </h2>
+        
+        <div class="board-meta">
+            <span>👤 {{ post.author_id | id_to_username }}</span>
+            <div style="width: 1px; height: 12px; background: #ddd; margin: 0 5px;"></div>
+            <span>📅 {{ post.time | unix_to_date }}</span>
+            <div style="width: 1px; height: 12px; background: #ddd; margin: 0 5px;"></div>
+            <span>👁️ {{ post.view }}</span>
+        </div>
+    </div>
+
+    <div class="board-content-view">
+        <div style="white-space: pre-wrap;">{{ post.content }}</div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
+        <a href="/board" class="btn-secondary">📋 목록으로</a>
+
+        {% if current_user.is_authenticated and current_user.get_id() == post.author_id %}
+        <div style="display: flex; gap: 10px;">
+            <a href="/board/edit/{{ post._id }}" class="btn-primary">수정</a>
+            <form action="/board/delete/{{ post._id }}" method="POST" onsubmit="return confirm('정말 삭제하시겠습니까?');" style="margin:0;">
+                <button type="submit" class="btn-danger">삭제</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

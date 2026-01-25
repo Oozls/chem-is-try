@@ -10,9 +10,9 @@
                 <span class="badge danger">독극물</span>
             {% endif %}
         </div>
-        <div class="meta-info">
+        <!-- <div class="meta-info">
             <span>ID: {{ reagent._id }}</span>
-        </div>
+        </div> -->
     </div>
 
     <div class="summary-bar">
@@ -39,8 +39,8 @@
         <div class="summary-item" style="max-width: 200px; overflow: auto;">
             <span class="label">Cas No.</span>
             <span class="value" style="letter-spacing: -1px;">
-                {% if reagent.cas %}
-                    {{ reagent.cas.cas if reagent.cas.cas else reagent.cas.message }}
+                {% if cas_info.status == 'success' %}
+                    {{ cas_info.cas if cas_info.cas else cas_info.message }}
                 {% else %}
                 -
                 {% endif %}
@@ -51,35 +51,36 @@
     <div class="custom-content-area">
         <h3>📋 상세 정보 &#40;GHS 경고표지&#41;</h3>
         <div class="custom-body">
-            {% if reagent.ghs %}
-                <span>{{ reagent.ghs.message if reagent.ghs.message }}</span>
-                <div>
-                    {% if reagent.ghs.pictograms %}
-                        {% for img in reagent.ghs.pictograms %}
-                            <img src="{{ img }}" style="width: 5rem;" alt="">
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                {% if reagent.ghs.hazard_statements %}
-                    {% for msg in reagent.ghs.hazard_statements %}
-                        <span>{{ msg }}</span>
+            <div>
+                {% if ghs_info.pictograms %}
+                    {% for img in ghs_info.pictograms %}
+                        <img src="{{ img }}" style="width: 5rem;" alt="">
                     {% endfor %}
                 {% endif %}
-            {% else %}
+            </div>
+
+            {% if ghs_info.hazard_statements %}
+                {% for msg in ghs_info.hazard_statements %}
+                    <br><span>{{ msg }}</span>
+                {% endfor %}
+            {% endif %}
+
+            {% if ghs_info.message == "GHS info not found." %}
                 <p style="color: #888;">등록된 추가 상세 정보가 없습니다.</p>
             {% endif %}
-            {% if reagent.cid %}
-            <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ reagent.cid }}" class="pubchem-link" target="_blank">미국 국립 의학 도서관 PubChem ↵</a>
+
+            {% if reagent['cid'] != "" and reagent['cid'] %}
+                <br><br><a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ reagent.cid }}" class="pubchem-link" target="_blank", style="font-weight: 700;">미국 국립 의학 도서관 PubChem ↵</a>
             {% endif %}
         </div>
     </div>
 
     <div class="form-actions" style="margin-top: 30px; justify-content: flex-end;">
-        <a href="/search" class="btn-secondary" style="text-decoration: none;">목록</a>
+        <a href="/reagent/search" class="btn-secondary" style="text-decoration: none;">목록</a>
         
         {% if current_user.is_authenticated and current_user.is_admin() %}
-            <a href="/edit/{{ reagent._id }}" class="btn-primary" style="text-decoration: none;">수정</a>
-            <a href="/delete/{{ reagent._id }}" class="btn-danger" style="text-decoration: none;">삭제</a>
+            <a href="/reagent/edit/{{ reagent._id }}" class="btn-primary" style="text-decoration: none;">수정</a>
+            <a href="/reagent/delete/{{ reagent._id }}" class="btn-danger" style="text-decoration: none;">삭제</a>
         {% endif %}
     </div>
 </div>

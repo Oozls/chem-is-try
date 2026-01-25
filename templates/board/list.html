@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="board-container">
+    <h2>📢 자유 게시판</h2>
+    <p style="color: #666; margin-bottom: 20px;">공지사항이나 자유로운 의견을 남겨주세요.</p>
+
+    <div class="board-header">
+        <form action="/board" method="GET" class="board-filter">
+            <select name="sort" onchange="this.form.submit()">
+                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>최신순</option>
+                <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>오래된순</option>
+            </select>
+            <input type="text" name="q" placeholder="제목 또는 작성자 검색" value="{{ q or '' }}">
+            <button type="submit" class="btn-primary" style="padding: 10px 15px; margin: 0;">검색</button>
+        </form>
+        
+        {% if current_user.is_authenticated %}
+        <a href="/board/post" class="btn-primary">✏️ 글쓰기</a>
+        {% endif %}
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 60px; text-align: center;">No.</th>
+                    <th>제목</th>
+                    <th style="width: 120px; text-align: center;">작성자</th>
+                    <th style="width: 150px; text-align: center;">작성일</th>
+                    <th style="width: 80px; text-align: center;">조회수</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if posts %}
+                    {% for post in posts %}
+                    <tr onclick="location.href='/board/view/{{ post._id }}'" style="cursor: pointer;">
+                        <td style="text-align: center;">
+                            {{ loop.index }}
+                        </td>
+                        <td>
+                            {% if post.category %}
+                            <span class="badge" style="background-color: #aaa; margin-right: 5px;">{{ post.category }}</span>
+                            {% endif %}
+                            {{ post.title }}
+                        </td>
+                        <td style="text-align: center;">{{ post.author_id | id_to_username }}</td>
+                        <td style="text-align: center;">{{ post.time | unix_to_date }}</td>
+                        <td style="text-align: center;">{{ post.view }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #888;">
+                            등록된 게시글이 없습니다.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

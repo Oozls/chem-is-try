@@ -3,7 +3,7 @@
 {% block content %}
 <div style="text-align: center;">
     <h2>로그인</h2>
-    <form action="/login" method="POST">
+    <form action="/account/login" method="POST">
         <div class="form-group">
             <label for="username">이름</label>
             <input type="text" id="username" name="username" required placeholder="이름을 입력하세요">
@@ -15,7 +15,7 @@
         <button type="submit">로그인</button>
     </form>
     <p style="margin-top: 20px;">
-        계정이 없으신가요? <a href="/signup">회원가입</a>
+        계정이 없으신가요? <a href="/account/signup">회원가입</a>
     </p>
 </div>
 {% endblock %}
