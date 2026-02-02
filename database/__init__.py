@@ -1,4 +1,4 @@
-from .board import board_collection, is_post_present, post_list, board_post, board_edit, board_delete
+from .board import board_collection, is_post_present, post_list, board_post, board_edit, board_delete, is_comment_present, comment_list, comment_post, comment_delete
 from .reagent import reagent_collection, is_reagent_present, reagent_list, reagent_register, reagent_bulk_register, reagent_edit, reagent_delete
 from .account import account_collection, is_account_present, accound_register
 from bson import ObjectId

@@ -36,7 +36,7 @@
                     {% for post in posts %}
                     <tr onclick="location.href='/board/view/{{ post._id }}'" style="cursor: pointer;">
                         <td style="text-align: center;">
-                            {{ loop.index }}
+                            {{ posts|length - loop.index + 1 }}
                         </td>
                         <td>
                             {% if post.category %}

@@ -3,7 +3,7 @@
 {% block content %}
 <h2>🧪 시약 상세 검색</h2>
 
-<form action="/search" method="GET" class="search-form">
+<form action="/reagent" method="GET" class="search-form" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
     
     <div class="form-group">
         <label for="name">시약 이름&#40;한글명, 영문명, 화학식&#41;</label>

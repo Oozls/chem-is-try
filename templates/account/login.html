@@ -3,7 +3,7 @@
 {% block content %}
 <div style="text-align: center;">
     <h2>로그인</h2>
-    <form action="/account/login" method="POST">
+    <form action="/account/login" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
         <div class="form-group">
             <label for="username">이름</label>
             <input type="text" id="username" name="username" required placeholder="이름을 입력하세요">

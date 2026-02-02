@@ -5,7 +5,9 @@
     <div class="compact-header">
         <div class="title-row">
             <h2>{{ reagent.name }}</h2>
+            {% if reagent.category %}
             <span class="badge category">{{ reagent.category }}</span>
+            {% endif %}
             {% if reagent.misc == '독극물' %}
                 <span class="badge danger">독극물</span>
             {% endif %}
@@ -50,6 +52,7 @@
 
     <div class="custom-content-area">
         <h3>📋 상세 정보 &#40;GHS 경고표지&#41;</h3>
+        {% if ghs_info %}
         <div class="custom-body">
             <div>
                 {% if ghs_info.pictograms %}
@@ -73,6 +76,9 @@
                 <br><br><a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ reagent.cid }}" class="pubchem-link" target="_blank", style="font-weight: 700;">미국 국립 의학 도서관 PubChem ↵</a>
             {% endif %}
         </div>
+        {% else %}
+        <span>CID 정보가 등록되지 않아 경고표지를 확인할 수 없습니다.</span>
+        {% endif %}
     </div>
 
     <div class="form-actions" style="margin-top: 30px; justify-content: flex-end;">

@@ -213,6 +213,7 @@ def reagent_detail_page(id):
     if not is_present: return redirect('/reagent')
 
     reagent = reagents[0]
+    ghs_info, cas_info = None, None
     if reagent['cid'] != "" and reagent['cid'] != None:
         ghs_info, cas_info = get_info(reagent['cid'])
 
@@ -379,12 +380,17 @@ def upload_file():
         existing_cols = [c for c in valid_columns if c in df.columns]
         
         reagents_list = df[existing_cols].to_dict('records')
+        for reagent in reagents_list:
+            print(reagent)
+            reagent['amount'] = int(float(reagent['amount'])) if reagent['amount'] != '' else None
+            reagent['left_amount'] = int(float(reagent['left_amount'])) if reagent['left_amount'] != '' else None
+            reagent['cid'] = int(float(reagent['cid'])) if reagent['cid'] != '' else None
 
         if not reagents_list: raise ValueError('등록할 데이터가 없거나 형식이 올바르지 않습니다.')
 
         session['preview_data'] = reagents_list
         flash(f'총 {len(reagents_list)}개의 시약이 인식되었습니다. 아래 목록을 확인 후 등록 버튼을 눌러주세요.', 'info')
-        return render_template('upload.html', preview=reagents_list)
+        return render_template('/reagent/upload.html', preview=reagents_list)
 
     except Exception as e:
         print(str(e))

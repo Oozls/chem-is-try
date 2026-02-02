@@ -11,7 +11,7 @@ login_manager.login_message = None
 @login_manager.unauthorized_handler
 def unauthorized():
     flash('로그인이 필요합니다.','error')
-    return redirect("/login")
+    return redirect("/account/login")
 
 class User(UserMixin):
     def __init__(self, id, username, password, admin):

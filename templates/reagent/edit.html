@@ -4,7 +4,7 @@
 <h2>📝 시약 정보 수정</h2>
 <p style="color: #666;">데이터를 수정한 후 저장 버튼을 눌러주세요.</p>
 
-<form action="/reagent/edit/{{ reagent._id }}" method="POST">
+<form action="/reagent/edit/{{ reagent._id }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
     <div class="form-group">
         <label for="name">시약</label>
         <span class="standard">ex: 한글명&#40;영문명 / 화학식&#41; 또는 한글명&#40;영문명&#41; 또는 한글명&#40;영문명1 & 영문명2&#41; 등</span>

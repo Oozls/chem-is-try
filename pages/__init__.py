@@ -2,6 +2,7 @@ from database import is_account_present, obj
 from dotenv import load_dotenv
 from flask import Flask, render_template
 from flask_cors import CORS
+from flask_session import Session
 from os import getenv
 
 load_dotenv()
@@ -11,7 +12,11 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = getenv('SECRET_KEY')
 app.template_folder = "../templates"
 app.static_folder = "../static"
+app.config['SESSION_TYPE'] = 'filesystem' 
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
 
+Session(app)
 CORS(app)
 
 
@@ -40,7 +45,7 @@ def unix_to_date(t):
     diff = today - date
 
     if diff.days == 0:
-        return datetime.fromtimestamp(t).strftime('%H:%M:%S')
+        return datetime.fromtimestamp(t).strftime('%H:%M')
     else:
         return datetime.fromtimestamp(t).strftime('%Y.%m.%d')
 
