@@ -26,13 +26,15 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px;">
         <a href="/board" class="btn-secondary">📋 목록으로</a>
 
-        {% if current_user.is_authenticated and current_user.get_id() == post.author_id %}
+        {% if current_user.is_authenticated %}
+        {% if current_user.get_id() == comment.author_id or current_user.is_admin() %}
         <div style="display: flex; gap: 10px;">
             <a href="/board/edit/{{ post._id }}" class="btn-primary">수정</a>
             <form action="/board/delete/{{ post._id }}" method="POST" onsubmit="return confirm('정말 삭제하시겠습니까?');" style="margin:0;">
                 <button type="submit" class="btn-danger">삭제</button>
             </form>
         </div>
+        {% endif %}
         {% endif %}
     </div>
 
@@ -85,11 +87,13 @@
                     <button type="button" class="btn-text" onclick="toggleReplyForm('{{ comment._id }}')">💬 답글</button>
                     {% endif %}
                     
-                    {% if current_user.is_authenticated and current_user.get_id() == comment.author_id %}
+                    {% if current_user.is_authenticated %}
+                    {% if current_user.get_id() == comment.author_id or current_user.is_admin() %}
                     <form action="/board/comment/delete/{{ comment._id }}" method="POST" onsubmit="return confirm('댓글을 삭제하시겠습니까?');" style="display:inline;">
                         <input type="hidden" name="post_id" value="{{ post._id }}">
                         <button type="submit" class="btn-text" style="color: #d9534f;">삭제</button>
                     </form>
+                    {% endif %}
                     {% endif %}
                 </div>
 

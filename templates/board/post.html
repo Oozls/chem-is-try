@@ -4,7 +4,7 @@
 <div style="max-width: 800px; margin: 0 auto;">
     <h2>{% if post %}📝 글 수정하기{% else %}✏️ 새 글 작성{% endif %}</h2>
     
-    <form method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+    <form action='/board/{{ "edit/"+post._id|string if post else "post" }}' method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
         
         <div class="form-group">
             <label for="category">말머리</label>

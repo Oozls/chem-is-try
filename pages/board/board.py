@@ -67,7 +67,7 @@ def board_edit_page(id):
         return redirect('/board')
     elif current_user.get_id() != str(post['_id']) and not current_user.is_admin():
         flash('자신의 글만 수정할 수 있습니다.', 'error')
-        return redirect('/board/{id}')
+        return redirect(f'/board/view/{id}')
     
     if request.method == "GET": return render_template('/board/post.html', post=post)
 
@@ -79,8 +79,8 @@ def board_edit_page(id):
     
     if success:
         flash('글이 성공적으로 수정되었습니다.', 'success')
-        return redirect(f'/board/{id}')
-    else: return redirect(f'/board/edit/{id}')
+        return redirect(f'/board/view/{id}')
+    else: return redirect(f'/board/view/{id}')
 
 
 

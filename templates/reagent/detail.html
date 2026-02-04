@@ -82,7 +82,7 @@
     </div>
 
     <div class="form-actions" style="margin-top: 30px; justify-content: flex-end;">
-        <a href="/reagent/search" class="btn-secondary" style="text-decoration: none;">목록</a>
+        <a href="/reagent" class="btn-secondary" style="text-decoration: none;">목록</a>
         
         {% if current_user.is_authenticated and current_user.is_admin() %}
             <a href="/reagent/edit/{{ reagent._id }}" class="btn-primary" style="text-decoration: none;">수정</a>
