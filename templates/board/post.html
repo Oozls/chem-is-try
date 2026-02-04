@@ -11,6 +11,8 @@
             <select id="category" name="category" required>
                 <option value="일반" {% if post and post.category == '일반' %}selected{% endif %}>일반</option>
                 <option value="질문" {% if post and post.category == '질문' %}selected{% endif %}>질문</option>
+                <option value="제보" {% if post and post.category == '제보' %}selected{% endif %}>제보</option>
+                <option value="요청" {% if post and post.category == '요청' %}selected{% endif %}>요청</option>
             </select>
         </div>
 
