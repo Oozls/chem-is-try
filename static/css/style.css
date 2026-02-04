@@ -265,6 +265,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    table-layout: fixed;
 }
 
 th, td {
@@ -281,6 +282,32 @@ th {
 
 tr:hover {
     background-color: #f1f1f1;
+}
+
+.col-name-fixed {
+    width: 45%;
+}
+
+.name-scroll-wrapper {
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: block;
+    padding-bottom: 2px;
+}
+
+.name-scroll-wrapper::-webkit-scrollbar {
+    height: 4px;
+}
+.name-scroll-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.name-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 2px;
+}
+.name-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
 }
 
 .badge {

@@ -14,7 +14,7 @@ board_bp = Blueprint("board", __name__, url_prefix="/board")
 @board_bp.route("/")
 def board_list_page():
     posts = post_list({})
-    if posts == None: return redirect('/board')
+    if posts == None: return redirect('/')
 
     sort = request.args.get('sort')
     query = request.args.get('q')

@@ -37,17 +37,18 @@ def main_page():
 
 
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
+KST = timezone(timedelta(hours=9))
 def unix_to_date(t):
     date = datetime.fromtimestamp(t)
     today = datetime.today()
     diff = today - date
 
     if diff.days == 0:
-        return datetime.fromtimestamp(t).strftime('%H:%M')
+        return datetime.fromtimestamp(t, tz=KST).strftime('%H:%M')
     else:
-        return datetime.fromtimestamp(t).strftime('%Y.%m.%d')
+        return datetime.fromtimestamp(t, tz=KST).strftime('%Y.%m.%d')
 
 app.jinja_env.filters["unix_to_date"] = unix_to_date
 

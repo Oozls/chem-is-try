@@ -85,7 +85,7 @@ def reagent_list_page():
         if misc != "all": keyword['misc'] = misc
 
     reagents = reagent_list(keyword)
-    if not reagents: return redirect('/reagent')
+    if not reagents: return redirect('/')
     reagents.sort(key=lambda x : (int(x['location']), x['name']))
 
     results = []

@@ -43,8 +43,12 @@ class User(UserMixin):
     
 @login_manager.user_loader
 def user_loader(user_id):
-    is_present, users = is_account_present({"_id":ObjectId(str(user_id))})
-    if not is_present: print('???')
-    user = users[0]
-    user['id'] = str(user.pop('_id'))
-    return User(**user)
+    try:
+        is_present, users = is_account_present({"_id":ObjectId(user_id)})
+        if not is_present: ValueError('사용자 정보를 불러오는 과정에서 오류가 발생했습니다.')
+        user = users[0]
+        user['id'] = str(user.pop('_id'))
+        return User(**user)
+    except Exception as e:
+        print(f'오류 발생: {e}')
+        return

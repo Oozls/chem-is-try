@@ -61,7 +61,7 @@
 <table>
     <thead>
         <tr>
-            <th>이름</th>
+            <th class="col-name-fixed">이름</th>
             <th>구분</th>
             <th>수량</th>
             <th>잔량</th>
@@ -78,16 +78,19 @@
         {% if reagents %}
             {% for item in reagents %}
             <tr>
-                <td style="font-weight: bold;">
-                    <a href="/reagent/detail/{{ item._id }}" class="rg-name">{{ item.name }}</a>
+                <td class="col-name-fixed" style="font-weight: bold;">
+                    <div class="name-scroll-wrapper">
+                        <a href="/reagent/detail/{{ item._id }}" class="rg-name">{{ item.name }}</a>
+                    </div>
+                    
                     {% if item.cid and current_user.is_authenticated %}
-                    {% if current_user.is_admin() %}
-                    <br/><span style="font-size: 0.8rem; color: #777; font-weight: 400;">CID: {{ item.cid }}</span>
+                        {% if current_user.is_admin() %}
+                        <span style="font-size: 0.8rem; color: #777; font-weight: 400; display: block;">CID: {{ item.cid }}</span>
+                        {% endif %}
                     {% endif %}
-                {% endif %}
                 </td>
                 
-                <td>{{ item.category }}</td>
+                <td style="width: 4rem;">{{ item.category }}</td>
                 
                 <td>{{ item.amount }}</td>
                 
