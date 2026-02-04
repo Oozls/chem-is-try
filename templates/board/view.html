@@ -27,7 +27,7 @@
         <a href="/board" class="btn-secondary">📋 목록으로</a>
 
         {% if current_user.is_authenticated %}
-        {% if current_user.get_id() == comment.author_id or current_user.is_admin() %}
+        {% if current_user.get_id() == post.author_id or current_user.is_admin() %}
         <div style="display: flex; gap: 10px;">
             <a href="/board/edit/{{ post._id }}" class="btn-primary">수정</a>
             <form action="/board/delete/{{ post._id }}" method="POST" onsubmit="return confirm('정말 삭제하시겠습니까?');" style="margin:0;">
