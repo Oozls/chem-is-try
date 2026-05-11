@@ -65,6 +65,14 @@ body {
     box-shadow: var(--shadow);
 }
 
+@media (max-width: 768px) {
+    .container {
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 8px;
+    }
+}
+
 a {
     text-decoration: none;
     color: inherit;
@@ -77,6 +85,25 @@ nav {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+@media (max-width: 768px) {
+    nav {
+        padding: 12px 15px;
+        flex-wrap: wrap;
+    }
+
+    nav ul {
+        gap: 12px !important;
+    }
+
+    nav a {
+        font-size: 0.9rem;
+    }
+
+    nav .logo {
+        font-size: 1.1rem;
+    }
 }
 
 nav .logo {
@@ -111,40 +138,127 @@ nav a:hover {
     display: inline-block;
 }
 
+@keyframes chevronRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(180deg);
+    }
+}
+
+
+@keyframes itemFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes backdropFadeIn {
+    from {
+        background-color: rgba(0, 0, 0, 0);
+    }
+    to {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.loading-spinner.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-top: 5px solid var(--white);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
 .dropdown-toggle {
     cursor: pointer;
     padding: 15px 0;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     font-weight: 500;
+    user-select: none;
+    gap: 4px;
+}
+
+.dropdown-toggle svg {
+    transition: transform 0.3s ease;
 }
 
 .dropdown-menu {
-    display: none;
     position: absolute;
     top: 100%;
     left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--white);
+    background-color: transparent;
     min-width: 160px;
     box-shadow: 0 8px 16px rgba(0,0,0,0.1);
     border: 1px solid #eee;
     border-radius: 8px;
     z-index: 1000;
     padding: 10px 0;
-    margin-top: 0; 
+    margin-top: 0;
     border-top: 5px solid transparent;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
 }
 
-.dropdown:hover .dropdown-menu {
-    display: block;
+.dropdown.active .dropdown-toggle svg {
+    animation: chevronRotate 0.3s ease forwards;
+}
+
+.dropdown.active .dropdown-menu {
+    pointer-events: auto;
+    background-color: var(--white);
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 .dropdown-menu a {
     padding: 10px 20px;
-    display: block;
+    display: flex;
+    align-items: center;
     font-size: 0.95rem;
     text-align: left;
     white-space: nowrap;
+    gap: 0;
 }
 
 .dropdown-menu a:hover {
@@ -157,6 +271,42 @@ h2 {
     border-bottom: 2px solid #eee;
     padding-bottom: 10px;
     margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+}
+
+@media (max-width: 768px) {
+    h2 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+
+    h3 {
+        font-size: 1.2rem;
+    }
+}
+
+.search-form {
+    margin-bottom: 20px;
+}
+
+.search-btn-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.search-btn-container button {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .search-btn-container button {
+        width: 100%;
+        padding: 14px 16px;
+        font-size: 0.95rem;
+    }
 }
 
 .form-group {
@@ -169,11 +319,34 @@ h2 {
     font-weight: 600;
 }
 
+@media (max-width: 768px) {
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+}
+
 .form-group .standard {
     display: block;
     font-size: 0.85rem;
     color: #888;
     margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+    .standard {
+        font-size: 0.8rem;
+    }
 }
 
 .form-group input, 
@@ -282,6 +455,35 @@ th {
 
 tr:hover {
     background-color: #f1f1f1;
+}
+
+@media (max-width: 768px) {
+    table {
+        table-layout: auto;
+        font-size: 0.9rem;
+        margin-top: 15px;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    th, td {
+        padding: 10px 8px;
+    }
+
+    th {
+        white-space: normal;
+    }
+
+    .col-name-fixed {
+        width: auto;
+        white-space: normal;
+    }
+
+    .name-scroll-wrapper {
+        white-space: normal;
+        overflow-x: visible;
+    }
 }
 
 .col-name-fixed {
@@ -442,6 +644,9 @@ tr:hover {
     margin-bottom: 15px;
     border-bottom: 1px dashed #ddd;
     padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
 }
 
 .upload-box {
@@ -501,6 +706,12 @@ tr:hover {
     flex: 1;
 }
 
+.radio-label span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .radio-label:hover {
     background-color: #f1f1f1;
 }
@@ -519,6 +730,9 @@ tr:hover {
     margin-bottom: 15px;
     font-size: 0.95rem;
     animation: fadeIn 0.3s ease-in-out;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
 }
 
 @keyframes fadeIn {
@@ -577,7 +791,7 @@ tr:hover {
 .board-meta span {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 0;
 }
 
 .comment-section {
@@ -678,12 +892,14 @@ tr:hover {
 .btn-text {
     background: none;
     border: none;
-    padding: 0;
+    padding: 0.5rem;
     color: #888;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.85rem;
-    padding: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .btn-text:hover {
@@ -700,4 +916,23 @@ tr:hover {
 .reply-form-container.active {
     display: block;
     animation: fadeIn 0.3s ease;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+    margin: 20px -20px;
+    padding: 0 20px;
+}
+
+@media (max-width: 768px) {
+    .table-wrapper {
+        margin: 15px -20px;
+        padding: 0 20px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 100%;
+    }
 }
