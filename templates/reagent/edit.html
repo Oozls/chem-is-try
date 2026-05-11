@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>📝 시약 정보 수정</h2>
+<h2>시약 정보 수정</h2>
 <p style="color: #666;">데이터를 수정한 후 저장 버튼을 눌러주세요.</p>
 
 <form action="/reagent/edit/{{ reagent._id }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">

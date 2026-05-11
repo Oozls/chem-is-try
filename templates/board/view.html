@@ -10,11 +10,11 @@
         </h2>
         
         <div class="board-meta">
-            <span>👤 {{ post.author_id | id_to_username }}</span>
+            <span>{{ post.author_id | id_to_username }}</span>
             <div style="width: 1px; height: 12px; background: #ddd; margin: 0 5px;"></div>
-            <span>📅 {{ post.time | unix_to_date }}</span>
+            <span>{{ post.time | unix_to_date }}</span>
             <div style="width: 1px; height: 12px; background: #ddd; margin: 0 5px;"></div>
-            <span>👁️ {{ post.view }}</span>
+            <span>{{ post.view }}</span>
         </div>
         <div style="border-bottom: 2px solid #eee; margin-top: 15px;"></div>
     </div>
@@ -24,7 +24,7 @@
     </div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px;">
-        <a href="/board" class="btn-secondary">📋 목록으로</a>
+        <a href="/board" class="btn-secondary">목록으로</a>
 
         {% if current_user.is_authenticated %}
         {% if current_user.get_id() == post.author_id or current_user.is_admin() %}
@@ -84,7 +84,7 @@
 
                 <div class="comment-actions">
                     {% if current_user.is_authenticated %}
-                    <button type="button" class="btn-text" onclick="toggleReplyForm('{{ comment._id }}')">💬 답글</button>
+                    <button type="button" class="btn-text" onclick="toggleReplyForm('{{ comment._id }}')">답글</button>
                     {% endif %}
                     
                     {% if current_user.is_authenticated %}

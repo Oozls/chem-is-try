@@ -2,7 +2,7 @@
 
 {% block content %}
 <div style="max-width: 100%; margin: 0 auto;">
-    <h2>📂 시약 일괄 등록 (Excel)</h2>
+    <h2>시약 일괄 등록 (Excel)</h2>
     
     {% if not preview %}
     <div class="upload-box">
@@ -16,7 +16,7 @@
                 <input type="file" name="file" accept=".xlsx, .xls" required class="file-input">
             </div>
             <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px;">
-                📤 엑셀 파일 분석하기
+                엑셀 파일 분석하기
             </button>
         </form>
         
@@ -39,21 +39,21 @@
                 <div class="option-group">
                     <label class="radio-label">
                         <input type="radio" name="mode" value="append" checked onchange="toggleWarning()">
-                        <span>➕ 추가 등록 (기존 데이터 유지)</span>
+                        <span>추가 등록 (기존 데이터 유지)</span>
                     </label>
                     <label class="radio-label">
                         <input type="radio" name="mode" value="replace" onchange="toggleWarning()">
-                        <span>🔄 덮어쓰기 (전체 삭제 후 등록)</span>
+                        <span>덮어쓰기 (전체 삭제 후 등록)</span>
                     </label>
                 </div>
 
                 <div id="warning-msg" class="warning-box" style="display: none;">
-                    ⚠️ <b>주의:</b> '덮어쓰기'를 선택하면 현재 저장된 <u>모든 시약 데이터가 영구적으로 삭제</u>되고 업로드한 데이터로 교체됩니다. 이 작업은 되돌릴 수 없습니다.
+                    <b>주의:</b> '덮어쓰기'를 선택하면 현재 저장된 <u>모든 시약 데이터가 영구적으로 삭제</u>되고 업로드한 데이터로 교체됩니다. 이 작업은 되돌릴 수 없습니다.
                 </div>
 
                 <div class="action-buttons">
                     <a href="/reagent/upload" class="btn-secondary">재업로드</a>
-                    <button type="submit" class="btn-primary">💾 실행 및 저장</button>
+                    <button type="submit" class="btn-primary">실행 및 저장</button>
                 </div>
             </form>
         </div>

@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="board-container">
-    <h2>📢 자유 게시판</h2>
+    <h2>자유 게시판</h2>
     <p style="color: #666; margin-bottom: 20px;">공지사항이나 자유로운 의견을 남겨주세요.</p>
 
     <div class="board-header">
@@ -16,7 +16,7 @@
         </form>
         
         {% if current_user.is_authenticated %}
-        <a href="/board/post" class="btn-primary">✏️ 글쓰기</a>
+        <a href="/board/post" class="btn-primary">글쓰기</a>
         {% endif %}
     </div>
 

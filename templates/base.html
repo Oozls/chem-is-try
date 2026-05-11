@@ -4,30 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chem-is-try | 시약 관리 시스템</title>
+    <script src="https://unpkg.com/feather-icons"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <nav>
-        <a href="/" class="logo">🧪 Chem-is-try</a>
+        <a href="/" class="logo">Chem-is-try</a>
         <ul>
             <li class="dropdown">
-                <span class="dropdown-toggle">시약 관리 ▾</span>
+                <span class="dropdown-toggle">시약 관리 <svg data-feather="chevron-down" style="width: 1em; height: 1em; margin-left: 4px; vertical-align: -0.15em;"></svg></span>
                 <div class="dropdown-menu">
-                    <a href="/reagent">🔍 시약 검색</a>
+                    <a href="/reagent">시약 검색</a>
                     {% if current_user.is_authenticated and current_user.is_admin() %}
-                    <a href="/reagent/register">➕ 개별 시약 등록</a>
-                    <a href="/reagent/upload">📂 엑셀 일괄 등록</a>
+                    <a href="/reagent/register">개별 시약 등록</a>
+                    <a href="/reagent/upload">엑셀 일괄 등록</a>
                     {% endif %}
-                    <a href="/reagent/download">📥 목록 다운로드</a>
+                    <a href="/reagent/download">목록 다운로드</a>
                 </div>
             </li>
 
             <li class="dropdown">
-                <span class="dropdown-toggle">게시판 ▾</span>
+                <span class="dropdown-toggle">게시판 <svg data-feather="chevron-down" style="width: 1em; height: 1em; margin-left: 4px; vertical-align: -0.15em;"></svg></span>
                 <div class="dropdown-menu">
-                    <a href="/board">📢 게시판</a>
+                    <a href="/board">게시판</a>
                     {% if current_user.is_authenticated %}
-                    <a href="/board/post">📝 글 작성</a>
+                    <a href="/board/post">글 작성</a>
                     {% endif %}
                 </div>
             </li>
@@ -41,6 +42,10 @@
             {% endif %}
         </ul>
     </nav>
+
+    <div id="loading-spinner" class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
 
     <div id="toast-container">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -65,12 +70,59 @@
     </div>
 
     <script>
+        function showLoadingSpinner() {
+            const spinner = document.getElementById("loading-spinner");
+            if (spinner) {
+                spinner.classList.add("show");
+            }
+        }
+
+        function hideLoadingSpinner() {
+            const spinner = document.getElementById("loading-spinner");
+            if (spinner) {
+                spinner.classList.remove("show");
+            }
+        }
+
+        window.addEventListener("pageshow", hideLoadingSpinner);
+
         document.addEventListener("DOMContentLoaded", function() {
+            feather.replace();
+
             const toasts = document.querySelectorAll(".toast");
             toasts.forEach(toast => {
                 setTimeout(() => {
                     toast.remove();
                 }, 7000);
+            });
+
+            document.querySelectorAll(".rg-name").forEach(link => {
+                link.addEventListener("click", showLoadingSpinner);
+            });
+
+            const dropdownToggles = document.querySelectorAll(".dropdown-toggle");
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    const dropdown = this.closest(".dropdown");
+                    const isActive = dropdown.classList.contains("active");
+
+                    document.querySelectorAll(".dropdown.active").forEach(d => {
+                        d.classList.remove("active");
+                    });
+
+                    if (!isActive) {
+                        dropdown.classList.add("active");
+                    }
+                });
+            });
+
+            document.addEventListener("click", function(e) {
+                if (!e.target.closest(".dropdown")) {
+                    document.querySelectorAll(".dropdown.active").forEach(d => {
+                        d.classList.remove("active");
+                    });
+                }
             });
         });
     </script>
