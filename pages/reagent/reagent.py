@@ -1,9 +1,10 @@
 from database import is_reagent_present, reagent_list, reagent_register, reagent_edit, reagent_delete, reagent_bulk_register, obj
 from difflib import SequenceMatcher
-from flask import Blueprint, render_template, redirect, request, flash, send_file, session
+from flask import Blueprint, render_template, redirect, request, flash, send_file, session, jsonify
 from flask_login import login_required, current_user
 from io import BytesIO
 from json import load
+from numpy import load as np_load
 from pandas import DataFrame, ExcelWriter, read_excel
 from requests import get
 from requests.exceptions import Timeout
@@ -119,6 +120,35 @@ def reagent_list_page():
 
 
 # --------- DETAIL --------- #
+def get_nearby_reagents(current_id):
+    try:
+        data = np_load('static/data/reagent_network.npz', allow_pickle=True)
+        object_ids = data['object_ids'].tolist()
+        if current_id not in object_ids:
+            return []
+        idx = object_ids.index(current_id)
+        x_arr = data['x'].tolist()
+        y_arr = data['y'].tolist()
+        z_arr = data['z'].tolist()
+        x0 = x_arr[idx] * 60
+        y0 = y_arr[idx] * 60
+        z0 = z_arr[idx] * 0.05
+        dists = []
+        for i, oid in enumerate(object_ids):
+            if i == idx:
+                continue
+            d = ((x_arr[i]*60 - x0)**2 + (y_arr[i]*60 - y0)**2 + (z_arr[i]*0.05 - z0)**2) ** 0.5
+            dists.append((d, oid))
+        dists.sort(key=lambda t: t[0])
+        result = []
+        for _, oid in dists[:3]:
+            ok, rs = is_reagent_present({'_id': obj(oid)})
+            if ok:
+                result.append(rs[0])
+        return result
+    except Exception:
+        return []
+
 def get_info(cid):
     ghs_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/{cid}/JSON?heading=Safety+and+Hazards"
     cas_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/{cid}/JSON?heading=CAS"
@@ -235,7 +265,8 @@ def reagent_detail_page(id):
             ghs_info['hazard_statements'] = msgs
             ghs_info['hazard_statements'].sort(key=lambda x: x[:4])
 
-    return render_template('/reagent/detail.html', reagent=reagent, ghs_info=ghs_info, cas_info=cas_info)
+    nearby_reagents = get_nearby_reagents(str(reagent['_id']))
+    return render_template('/reagent/detail.html', reagent=reagent, ghs_info=ghs_info, cas_info=cas_info, nearby_reagents=nearby_reagents)
 
 
 
@@ -416,3 +447,22 @@ def save_upload():
         return redirect('/reagent')
     else:
         return redirect('/reagent/upload')
+
+
+
+
+# --------- 3D GRAPH --------- #
+@reagent_bp.route('/3d')
+def reagent_3d_page():
+    return render_template('/reagent/3d_graph.html')
+
+@reagent_bp.route('/3d-data')
+def reagent_3d_data():
+    data = np_load('static/data/reagent_network.npz', allow_pickle=True)
+    return jsonify({
+        'x': data['x'].tolist(),
+        'y': data['y'].tolist(),
+        'z': data['z'].tolist(),
+        'object_ids': data['object_ids'].tolist(),
+        'names': data['names'].tolist(),
+    })

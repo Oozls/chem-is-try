@@ -81,6 +81,42 @@
         {% endif %}
     </div>
 
+    {% if nearby_reagents %}
+    <div style="margin-top: 24px;">
+        <style>
+            .nearby-title {
+                font-size: 1.05rem; color: var(--primary-color);
+                margin: 0 0 12px; padding-bottom: 10px;
+                border-bottom: 1px dashed #ddd;
+                display: flex; align-items: center; gap: 0.3em;
+            }
+            .nearby-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            @media (max-width: 600px) { .nearby-grid { grid-template-columns: 1fr; } }
+            .nearby-card {
+                display: block; padding: 11px 14px;
+                border: 1px solid #e2e8f0; border-radius: 8px;
+                background: #fff; transition: border-color 0.15s, box-shadow 0.15s;
+                cursor: pointer;
+            }
+            .nearby-card:hover { border-color: var(--primary-color); box-shadow: 0 2px 8px rgba(74,144,226,0.15); }
+            .nearby-card-name { font-size: 0.78rem; font-weight: 600; color: #333; margin-bottom: 7px; line-height: 1.4; }
+            .nearby-card-meta { font-size: 0.72rem; color: #888; display: flex; gap: 10px; }
+        </style>
+        <h3 class="nearby-title">인접 시약</h3>
+        <div class="nearby-grid">
+            {% for r in nearby_reagents %}
+            <a href="/reagent/detail/{{ r._id }}" class="nearby-card rg-name">
+                <div class="nearby-card-name">{{ r.name }}</div>
+                <div class="nearby-card-meta">
+                    <span>수량 {{ r.amount if r.amount is not none else '—' }}</span>
+                    <span>잔량 {{ r.left_amount if r.left_amount is not none else '—' }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="form-actions" style="margin-top: 30px; justify-content: flex-end;">
         <a href="/reagent" class="btn-secondary" style="text-decoration: none;">목록</a>
         

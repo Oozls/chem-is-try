@@ -1,0 +1,544 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .container { max-width:none; margin:0; padding:0; border-radius:0; box-shadow:none; background:transparent; }
+    #graph-container {
+        position: fixed;
+        /* top은 JS에서 nav 높이에 맞게 동적 설정 */
+        top: 60px; left: 0; right: 0; bottom: 0;
+        overflow: hidden;
+        cursor: default;
+    }
+    .point-label {
+        position:absolute;
+        color:#fff;
+        text-shadow:
+            -1px -1px 0 #000,
+             1px -1px 0 #000,
+            -1px  1px 0 #000,
+             1px  1px 0 #000;
+        padding:2px 8px; border-radius:4px; font-size:0.7rem; white-space:nowrap;
+        pointer-events:none; border:none; text-align:center;
+        transform-origin:50% 50%; will-change:transform,opacity;
+        font-weight:700;
+    }
+
+    /* ── 시약 목록 패널 (데스크톱: 좌측) ── */
+    #list-panel {
+        position:absolute; top:0; left:0; height:100%; width:220px;
+        background:rgba(15,20,35,0.9); backdrop-filter:blur(10px);
+        border-right:1px solid rgba(255,255,255,0.1);
+        display:flex; flex-direction:column; z-index:100;
+        transition:transform 0.25s ease;
+    }
+    #list-panel.collapsed { transform:translateX(-220px); }
+
+    #list-toggle {
+        position:absolute; top:50%; right:-28px; transform:translateY(-50%);
+        width:28px; height:40px; padding:0;
+        background:rgba(15,20,35,0.9); border:1px solid rgba(255,255,255,0.12);
+        border-left:none; border-radius:0 6px 6px 0;
+        color:rgba(255,255,255,0.6); cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        font-size:0.65rem; transition:color 0.15s; user-select:none;
+        flex-shrink:0;
+    }
+    #list-toggle:hover { color:#fff; }
+
+    #list-header {
+        padding:12px 14px 9px; font-size:0.68rem; font-weight:600;
+        color:rgba(255,255,255,0.4); letter-spacing:0.07em; text-transform:uppercase;
+        border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0;
+    }
+    #list-scroll { overflow-y:auto; flex:1; padding:4px 0; }
+    #list-scroll::-webkit-scrollbar { width:4px; }
+    #list-scroll::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.18); border-radius:2px; }
+    .list-item {
+        padding:6px 14px; font-size:0.72rem; color:rgba(255,255,255,0.68);
+        cursor:pointer; border-radius:3px; margin:1px 6px;
+        transition:background 0.12s, color 0.12s;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        border-left:2px solid transparent;
+    }
+    .list-item:hover { background:rgba(255,255,255,0.09); color:#fff; }
+    .list-item.focused { background:rgba(90,150,255,0.2); color:#9ac8ff; border-left:2px solid #7eb8ff; }
+
+    /* ── 모바일: 하단 패널 ── */
+    @media (max-width: 640px) {
+        #list-panel {
+            top:auto; bottom:0; left:0; right:0;
+            width:100%; height:45vh;
+            border-right:none; border-top:1px solid rgba(255,255,255,0.12);
+            flex-direction:column;
+            transform:translateY(calc(100% - 36px));
+        }
+        #list-panel.mobile-open { transform:translateY(0); }
+        /* 데스크톱 collapsed 무시 */
+        #list-panel.collapsed { transform:translateY(calc(100% - 36px)); }
+        #list-toggle {
+            position:static !important; right:auto !important; top:auto !important;
+            transform:none !important; order:-1;
+            width:100%; height:36px; border-radius:0 !important;
+            border:none !important; border-bottom:1px solid rgba(255,255,255,0.08) !important;
+        }
+        #list-header { display:none; }
+    }
+
+    /* ── 하단 오른쪽 포커스 정보 ── */
+    #focus-info {
+        position:absolute; bottom:18px; right:18px;
+        background:rgba(15,20,35,0.82); backdrop-filter:blur(8px);
+        border:1px solid rgba(255,255,255,0.1); border-radius:8px;
+        padding:10px 14px; z-index:90; pointer-events:none;
+        max-width:300px; text-align:right;
+    }
+    #focus-name {
+        font-size:0.85rem; font-weight:600;
+        color:rgba(255,255,255,0.32); margin-bottom:5px;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        transition:color 0.2s;
+    }
+    #focus-hint { font-size:0.64rem; color:rgba(255,255,255,0.3); line-height:1.4; }
+</style>
+<div id="graph-container">
+    <div id="list-panel">
+        <div id="list-header">시약 목록</div>
+        <div id="list-scroll"></div>
+        <button id="list-toggle">◀</button>
+    </div>
+    <div id="focus-info">
+        <div id="focus-name">—</div>
+        <div id="focus-hint">점을 클릭하면 세부 정보를<br>확인할 수 있습니다</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ── nav 높이에 맞게 container top 설정 ──
+    const container = document.getElementById('graph-container');
+    const navEl = document.querySelector('nav');
+    if (navEl) container.style.top = navEl.offsetHeight + 'px';
+
+    function makeCircleTexture(size = 64) {
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, size, size);
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, size/2-1, 0, Math.PI*2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        return new THREE.CanvasTexture(c);
+    }
+
+    function makeRingTexture(size = 64) {
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, size, size);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, size/2-5, 0, Math.PI*2);
+        ctx.stroke();
+        return new THREE.CanvasTexture(c);
+    }
+
+    function smoothstep(t) {
+        t = Math.max(0, Math.min(1, t));
+        return t*t*(3-2*t);
+    }
+
+    // ── Scene ──
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf4f6f9);
+
+    const camera = new THREE.PerspectiveCamera(60, container.clientWidth/container.clientHeight, 0.1, 10000);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    // 라벨 컨테이너 — z-index 50으로 리스트 패널(100) 뒤
+    const labelContainer = document.createElement('div');
+    labelContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:50;';
+    container.appendChild(labelContainer);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.params.Points.threshold = 2;
+    const mouse = new THREE.Vector2();
+
+    let pointsObject = null;
+    let scaledData   = [];
+    let objectIds    = [];
+    let reagentNames = [];
+    const labelDivs  = [];
+
+    const SHOW_DIST = 250;
+    const SCALE_REF = 80;
+    const _v        = new THREE.Vector3();
+    let containerW  = container.clientWidth;
+    let containerH  = container.clientHeight;
+
+    // ── 하이라이트 링 ──
+    const hlGeo = new THREE.BufferGeometry();
+    hlGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
+    const hlMesh = new THREE.Points(hlGeo, new THREE.PointsMaterial({
+        size: 26, color: 0xffcc44, sizeAttenuation: true,
+        map: makeRingTexture(), alphaTest: 0.1, transparent: true, depthTest: false,
+    }));
+    hlMesh.renderOrder   = 1;
+    hlMesh.frustumCulled = false; // 포지션 업데이트 후 컬링 방지
+    hlMesh.visible       = false;
+    scene.add(hlMesh);
+
+    let focusedIdx = -1;
+    const focusNameEl = document.getElementById('focus-name');
+
+    function setFocused(idx) {
+        focusedIdx = idx;
+        document.querySelectorAll('.list-item').forEach((el, i) => {
+            el.classList.toggle('focused', i === idx);
+            if (i === idx) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        });
+        if (idx >= 0 && scaledData.length > idx) {
+            const [px, py, pz] = scaledData[idx];
+            const posArr = hlGeo.attributes.position.array;
+            posArr[0] = px; posArr[1] = py; posArr[2] = pz;
+            hlGeo.attributes.position.needsUpdate = true;
+            hlMesh.visible = true;
+            if (focusNameEl) {
+                focusNameEl.textContent = reagentNames[idx] || '(이름 없음)';
+                focusNameEl.style.color = '#9ac8ff';
+            }
+        } else {
+            hlMesh.visible = false;
+            if (focusNameEl) {
+                focusNameEl.textContent = '—';
+                focusNameEl.style.color = 'rgba(255,255,255,0.32)';
+            }
+        }
+    }
+
+    // ── 자동 시점 이동 ──
+    const TRAVEL_MS   = 3000;
+    const ORBIT_MS    = 4000;
+    const IDLE_MS     = 5000;
+    const ORBIT_SPEED = 0.6;
+
+    let apState      = 'idle';
+    let apPhaseStart = 0;
+    let apTarget     = null;
+    let apStartCam   = null;
+    let apEndCam     = null;
+    let apStartTgt   = null;
+    let apOrbitR     = 100;
+    let apOrbitPhi   = Math.PI/4;
+    let apOrbitTheta = 0;
+    let apLocked     = false;
+    let idleTimeout  = null;
+    let prevTime     = performance.now();
+
+    function resetIdle() {
+        apLocked = false;
+        apState  = 'idle';
+        setFocused(-1);
+        clearTimeout(idleTimeout);
+        idleTimeout = setTimeout(() => {
+            if (!scaledData.length) return;
+            beginTravel();
+        }, IDLE_MS);
+    }
+
+    function pickTarget() {
+        const idx = Math.floor(Math.random() * scaledData.length);
+        const [px, py, pz] = scaledData[idx];
+        apTarget = new THREE.Vector3(px, py, pz);
+        setFocused(idx);
+    }
+
+    function beginTravel() {
+        pickTarget();
+        const theta = Math.random() * Math.PI * 2;
+        const phi   = Math.PI/6 + Math.random() * Math.PI/3;
+        apOrbitR    = 100;
+        apStartCam  = camera.position.clone();
+        apStartTgt  = controls.target.clone();
+        apEndCam    = new THREE.Vector3(
+            apTarget.x + apOrbitR * Math.sin(phi) * Math.cos(theta),
+            apTarget.y + apOrbitR * Math.cos(phi),
+            apTarget.z + apOrbitR * Math.sin(phi) * Math.sin(theta)
+        );
+        apPhaseStart = performance.now();
+        apState      = 'traveling';
+    }
+
+    function focusPoint(idx) {
+        apLocked = true;
+        setFocused(idx);
+        const [px, py, pz] = scaledData[idx];
+        apTarget = new THREE.Vector3(px, py, pz);
+        const theta = Math.random() * Math.PI * 2;
+        const phi   = Math.PI/6 + Math.random() * Math.PI/3;
+        apOrbitR    = 100;
+        apStartCam  = camera.position.clone();
+        apStartTgt  = controls.target.clone();
+        apEndCam    = new THREE.Vector3(
+            apTarget.x + apOrbitR * Math.sin(phi) * Math.cos(theta),
+            apTarget.y + apOrbitR * Math.cos(phi),
+            apTarget.z + apOrbitR * Math.sin(phi) * Math.sin(theta)
+        );
+        apPhaseStart = performance.now();
+        apState      = 'traveling';
+        clearTimeout(idleTimeout);
+    }
+
+    function beginOrbit() {
+        const offset = camera.position.clone().sub(apTarget);
+        apOrbitR     = offset.length();
+        apOrbitPhi   = Math.acos(Math.max(-1, Math.min(1, offset.y/apOrbitR)));
+        apOrbitTheta = Math.atan2(offset.z, offset.x);
+        apPhaseStart = performance.now();
+        apState      = 'orbiting';
+    }
+
+    renderer.domElement.addEventListener('pointerdown', resetIdle);
+    renderer.domElement.addEventListener('wheel',       resetIdle);
+    renderer.domElement.addEventListener('touchstart',  resetIdle, { passive: true });
+
+    // ── 데이터 로드 ──
+    fetch('/reagent/3d-data')
+        .then(r => r.json())
+        .then(data => {
+            objectIds    = data.object_ids;
+            reagentNames = data.names;
+            scaledData   = data.x.map((x, i) => [x*60, data.y[i]*60, data.z[i]*0.05]);
+
+            const positions = new Float32Array(scaledData.flat());
+            const geometry  = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            // Three.js r160 기본값: 선형 색상 → sRGB 감마 보정 출력
+            // CSS에서 동일하게 보이려면 pow(v, 1/2.2) 적용
+            const gamma = v => Math.min(255, Math.round(Math.pow(Math.max(0, v), 1/2.2) * 255));
+            const colors    = new Float32Array(scaledData.length * 3);
+            const cssColors = [];
+            for (let i = 0; i < scaledData.length; i++) {
+                const r = 0.2 + Math.random() * 0.5;
+                const g = 0.4 + Math.random() * 0.4;
+                const b = 0.7 + Math.random() * 0.3;
+                colors[i*3]   = r;
+                colors[i*3+1] = g;
+                colors[i*3+2] = b;
+                cssColors.push(`rgb(${gamma(r)},${gamma(g)},${gamma(b)})`);
+            }
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            pointsObject = new THREE.Points(geometry, new THREE.PointsMaterial({
+                size: 10, vertexColors: true, sizeAttenuation: true,
+                map: makeCircleTexture(), alphaTest: 0.5, transparent: true,
+            }));
+            scene.add(pointsObject);
+
+            // 최근접 3개 연결선
+            const edgeSet       = new Set();
+            const linePositions = [];
+            for (let i = 0; i < scaledData.length; i++) {
+                const [x1,y1,z1] = scaledData[i];
+                const dists = [];
+                for (let j = 0; j < scaledData.length; j++) {
+                    if (i === j) continue;
+                    const [x2,y2,z2] = scaledData[j];
+                    dists.push([Math.sqrt((x1-x2)**2+(y1-y2)**2+(z1-z2)**2), j]);
+                }
+                dists.sort((a,b) => a[0]-b[0]);
+                for (let k = 0; k < 3; k++) {
+                    const j   = dists[k][1];
+                    const key = Math.min(i,j)+'_'+Math.max(i,j);
+                    if (!edgeSet.has(key)) {
+                        edgeSet.add(key);
+                        linePositions.push(...scaledData[i], ...scaledData[j]);
+                    }
+                }
+            }
+            const lineGeo = new THREE.BufferGeometry();
+            lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(linePositions), 3));
+            scene.add(new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
+                color: 0x999999, opacity: 0.35, transparent: true,
+            })));
+
+            // 라벨 div — 점 색상을 배경으로
+            data.names.forEach((name, i) => {
+                const div = document.createElement('div');
+                div.className = 'point-label';
+                div.textContent = name || '';
+                div.style.opacity         = '0';
+                div.style.transform       = 'translate(-50%, -50%) scale(0)';
+                div.style.backgroundColor = cssColors[i];
+                labelContainer.appendChild(div);
+                labelDivs.push(div);
+            });
+
+            // 시약 목록 패널 아이템
+            const listScroll = document.getElementById('list-scroll');
+            data.names.forEach((name, idx) => {
+                const item = document.createElement('div');
+                item.className   = 'list-item';
+                item.textContent = name || '(이름 없음)';
+                item.title       = name || '';
+                item.addEventListener('click', () => focusPoint(idx));
+                listScroll.appendChild(item);
+            });
+
+            // 초기 카메라
+            const centroid = scaledData.reduce(
+                (acc,[x,y,z]) => [acc[0]+x, acc[1]+y, acc[2]+z], [0,0,0]
+            ).map(v => v / scaledData.length);
+            geometry.computeBoundingSphere();
+            const radius = geometry.boundingSphere.radius;
+            camera.position.set(centroid[0], centroid[1], centroid[2] + radius * 2.5);
+            controls.target.set(...centroid);
+            controls.update();
+
+            resetIdle();
+        })
+        .catch(e => console.error('데이터 로드 실패:', e));
+
+    // ── 패널 토글 ──
+    const listPanel  = document.getElementById('list-panel');
+    const listToggle = document.getElementById('list-toggle');
+
+    function isMobile() { return window.innerWidth <= 640; }
+
+    let panelOpen = !isMobile();
+
+    function updatePanelState() {
+        const mobile = isMobile();
+        if (mobile) {
+            listPanel.classList.toggle('mobile-open', panelOpen);
+            listPanel.classList.remove('collapsed');
+            listToggle.textContent = panelOpen ? '▼' : '▲';
+        } else {
+            listPanel.classList.toggle('collapsed', !panelOpen);
+            listPanel.classList.remove('mobile-open');
+            listToggle.textContent = panelOpen ? '◀' : '▶';
+        }
+    }
+
+    listToggle.addEventListener('click', e => {
+        e.stopPropagation();
+        panelOpen = !panelOpen;
+        updatePanelState();
+    });
+
+    window.addEventListener('resize', () => {
+        containerW = container.clientWidth;
+        containerH = container.clientHeight;
+        camera.aspect = containerW / containerH;
+        camera.updateProjectionMatrix();
+        renderer.setSize(containerW, containerH);
+        // nav 높이 변경 대응
+        if (navEl) container.style.top = navEl.offsetHeight + 'px';
+        panelOpen = !isMobile();
+        updatePanelState();
+    });
+
+    updatePanelState();
+
+    // ── 클릭 → 로딩 → 상세 페이지 ──
+    renderer.domElement.addEventListener('click', e => {
+        if (!pointsObject) return;
+        const rect = container.getBoundingClientRect();
+        mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+        mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObject(pointsObject);
+        if (hits.length > 0) {
+            const idx = hits[0].index;
+            const name = reagentNames[idx] || '';
+            const loadingText = document.getElementById('loading-text');
+            if (loadingText) loadingText.textContent = name;
+            if (typeof showLoadingSpinner === 'function') showLoadingSpinner();
+            window.location.href = `/reagent/detail/${objectIds[idx]}`;
+        }
+    });
+
+    // ── 애니메이션 루프 ──
+    const camPos = camera.position;
+
+    (function animate() {
+        requestAnimationFrame(animate);
+
+        const now = performance.now();
+        const dt  = Math.min((now - prevTime) / 1000, 0.1);
+        prevTime  = now;
+
+        if (apState === 'traveling') {
+            const t = smoothstep((now - apPhaseStart) / TRAVEL_MS);
+            camera.position.lerpVectors(apStartCam, apEndCam, t);
+            controls.target.lerpVectors(apStartTgt, apTarget, t);
+            if (now - apPhaseStart >= TRAVEL_MS) {
+                camera.position.copy(apEndCam);
+                controls.target.copy(apTarget);
+                beginOrbit();
+            }
+        } else if (apState === 'orbiting') {
+            apOrbitTheta += ORBIT_SPEED * dt;
+            camera.position.set(
+                apTarget.x + apOrbitR * Math.sin(apOrbitPhi) * Math.cos(apOrbitTheta),
+                apTarget.y + apOrbitR * Math.cos(apOrbitPhi),
+                apTarget.z + apOrbitR * Math.sin(apOrbitPhi) * Math.sin(apOrbitTheta)
+            );
+            controls.target.copy(apTarget);
+            if (!apLocked && now - apPhaseStart >= ORBIT_MS) {
+                beginTravel();
+            }
+        }
+
+        controls.update();
+
+        // 라벨 업데이트
+        if (labelDivs.length > 0) {
+            const cx = camPos.x, cy = camPos.y, cz = camPos.z;
+            for (let i = 0; i < scaledData.length; i++) {
+                const [px,py,pz] = scaledData[i];
+                const dx = cx-px, dy = cy-py, dz = cz-pz;
+                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                const div  = labelDivs[i];
+                if (dist > SHOW_DIST) { div.style.opacity = '0'; continue; }
+                _v.set(px, py, pz).project(camera);
+                if (_v.z > 1) { div.style.opacity = '0'; continue; }
+                const sx    = (_v.x *  0.5 + 0.5) * containerW;
+                const sy    = (-_v.y * 0.5 + 0.5) * containerH;
+                const scale = Math.max(0.3, Math.min(2.2, SCALE_REF / dist));
+                const fade  = Math.min(1, (SHOW_DIST - dist) / 50);
+                div.style.left      = sx + 'px';
+                div.style.top       = sy + 'px';
+                div.style.opacity   = fade.toFixed(2);
+                div.style.transform = `translate(-50%, -50%) scale(${scale.toFixed(3)})`;
+                div.style.zIndex    = String(Math.round(SHOW_DIST - dist));
+            }
+        }
+
+        renderer.render(scene, camera);
+    })();
+</script>
+{% endblock %}

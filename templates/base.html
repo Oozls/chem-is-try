@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chem-is-try | 시약 관리 시스템</title>
     <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -20,6 +21,7 @@
                     <a href="/reagent/upload">엑셀 일괄 등록</a>
                     {% endif %}
                     <a href="/reagent/download">목록 다운로드</a>
+                    <a href="/reagent/3d">3D 그래프</a>
                 </div>
             </li>
 
@@ -43,8 +45,22 @@
         </ul>
     </nav>
 
+    <!-- Welcome Modal -->
+    <div id="welcome-overlay" class="welcome-overlay" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+        <div class="welcome-modal">
+            <div class="welcome-modal-body" id="welcome-body"></div>
+            <div class="welcome-modal-footer">
+                <span class="welcome-countdown" id="welcome-countdown">8초 후 자동으로 닫힙니다</span>
+                <button class="welcome-close-btn" id="welcome-close">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <div id="loading-spinner" class="loading-spinner">
-        <div class="spinner"></div>
+        <div class="spinner-content">
+            <div class="spinner"></div>
+            <div id="loading-text" class="loading-text"></div>
+        </div>
     </div>
 
     <div id="toast-container">
@@ -70,6 +86,68 @@
     </div>
 
     <script>
+        /* ── Welcome modal ──────────────────────────────────────────── */
+        (function () {
+            // 세션마다 한 번 (새 탭/창마다 재표시)
+            if (sessionStorage.getItem('welcomeShown')) return;
+            sessionStorage.setItem('welcomeShown', '1');
+
+            // ▼ 여기에 마크다운으로 공지 내용을 작성하세요 ▼
+            const WELCOME_MD = `
+## Chem-is-try에 오신 것을 환영합니다!
+
+이 시스템은 실험실 시약을 검색하고 관리하기 위한 도구입니다.
+
+현재 해당 사이트는 온전히 **18기의 봉사 정신**으로 운영되고 있습니다.
+
+사이트 이용 중 불편한 점, 또는 원하는 기능이 있다면 게시판에 자유롭게 의견을 공유해주세요!
+
+**애초에, 이 사이트 쓰이고는 있나요???**
+`;
+            // ▲ 공지 내용 끝 ▲
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const overlay  = document.getElementById('welcome-overlay');
+                const body     = document.getElementById('welcome-body');
+                const closeBtn = document.getElementById('welcome-close');
+                const countdown = document.getElementById('welcome-countdown');
+
+                body.innerHTML = marked.parse(WELCOME_MD.trim());
+
+                // 표시
+                requestAnimationFrame(function () {
+                    overlay.classList.add('show');
+                });
+
+                // 카운트다운
+                const TOTAL = 8;
+                let remaining = TOTAL;
+                const tick = setInterval(function () {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(tick);
+                        closeModal();
+                    } else {
+                        countdown.textContent = remaining + '초 후 자동으로 닫힙니다';
+                    }
+                }, 1000);
+
+                function closeModal() {
+                    clearInterval(tick);
+                    overlay.classList.remove('show');
+                    overlay.addEventListener('transitionend', function () {
+                        overlay.style.display = 'none';
+                    }, { once: true });
+                }
+
+                closeBtn.addEventListener('click', closeModal);
+                overlay.addEventListener('click', function (e) {
+                    if (e.target === overlay) closeModal();
+                });
+            });
+        })();
+        /* ── /Welcome modal ─────────────────────────────────────────── */
+
         function showLoadingSpinner() {
             const spinner = document.getElementById("loading-spinner");
             if (spinner) {
@@ -126,5 +204,6 @@
             });
         });
     </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

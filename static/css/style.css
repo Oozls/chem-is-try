@@ -85,6 +85,8 @@ nav {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 200;
 }
 
 @media (max-width: 768px) {
@@ -205,6 +207,28 @@ nav a:hover {
     border-top: 5px solid var(--white);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+.spinner-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.loading-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.5;
+    opacity: 0;
+    transition: opacity 0.25s ease 0.1s;
+}
+
+.loading-spinner.show .loading-text {
+    opacity: 1;
 }
 
 .dropdown-toggle {
@@ -557,6 +581,87 @@ tr:hover {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 0.95; }
 }
+
+/* Welcome Modal */
+.welcome-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.welcome-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+.welcome-modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    max-width: 520px;
+    width: calc(100% - 32px);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(16px) scale(0.97);
+    transition: transform 0.3s ease;
+}
+.welcome-overlay.show .welcome-modal {
+    transform: translateY(0) scale(1);
+}
+.welcome-modal-body {
+    padding: 28px 28px 20px;
+    overflow-y: auto;
+    flex: 1;
+    line-height: 1.75;
+    color: #333;
+    font-size: 0.92rem;
+}
+.welcome-modal-body h1 { font-size: 1.3rem; color: var(--primary-color); margin: 0 0 14px; }
+.welcome-modal-body h2 { font-size: 1.1rem; color: var(--primary-color); margin: 16px 0 10px; }
+.welcome-modal-body h3 { font-size: 0.98rem; color: #555; margin: 14px 0 8px; }
+.welcome-modal-body p  { margin: 0 0 10px; }
+.welcome-modal-body ul, .welcome-modal-body ol { padding-left: 1.4em; margin: 0 0 10px; }
+.welcome-modal-body li { margin-bottom: 4px; }
+.welcome-modal-body a  { color: var(--primary-color); }
+.welcome-modal-body hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }
+.welcome-modal-body code {
+    background: #f4f6f9; border-radius: 4px;
+    padding: 1px 5px; font-size: 0.87em;
+}
+.welcome-modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #fafbfc;
+}
+.welcome-countdown {
+    font-size: 0.78rem;
+    color: #999;
+}
+.welcome-close-btn {
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+.welcome-close-btn:hover { background: var(--hover-color); }
 
 .detail-container {
     max-width: 800px;
