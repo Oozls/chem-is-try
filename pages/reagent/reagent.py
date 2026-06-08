@@ -252,18 +252,18 @@ def reagent_detail_page(id):
 
         if 'pictograms' in ghs_info.keys(): ghs_info['pictograms'] = list(set(ghs_info['pictograms']))
         if 'hazard_statements' in ghs_info.keys():
-            ghs_info['hazard_statements'] = list(set(ghs_info['hazard_statements']))
-            msgs = []
+            msgs = {}
             for msg in ghs_info['hazard_statements']:
-                if msg[0] == 'H':
+                if msg and msg[0] == 'H':
                     space_index = msg.find(' ')
                     code = msg[:space_index].strip().replace(':', '')
-                    
-                    if code in ghs_translation.keys(): msgs.append(f"{code} : {ghs_translation[code]}")
-                    else: msgs.append(msg)
-                else: msgs.append(msg)
-            ghs_info['hazard_statements'] = msgs
-            ghs_info['hazard_statements'].sort(key=lambda x: x[:4])
+                    if code not in msgs:
+                        if code in ghs_translation.keys(): msgs[code] = f"{code} : {ghs_translation[code]}"
+                        else: msgs[code] = msg
+                else:
+                    if msg not in msgs:
+                        msgs[msg] = msg
+            ghs_info['hazard_statements'] = sorted(msgs.values(), key=lambda x: x[:4])
 
     nearby_reagents = get_nearby_reagents(str(reagent['_id']))
     return render_template('/reagent/detail.html', reagent=reagent, ghs_info=ghs_info, cas_info=cas_info, nearby_reagents=nearby_reagents)
