@@ -1,4 +1,5 @@
 from bson import ObjectId
+from datetime import datetime
 from flask import flash
 from flask_pymongo import PyMongo
 from pymongo import MongoClient, InsertOne
@@ -34,7 +35,7 @@ def reagent_list(keyword: dict) -> list:
     
 def reagent_register(name, category, amount, left_amount, location, misc, cid) -> bool:
     try:
-        reagent_collection.insert_one({'name':name, 'category':category, 'amount':amount, 'left_amount':left_amount, 'location':location, 'misc':misc, 'cid':cid})
+        reagent_collection.insert_one({'name':name, 'category':category, 'amount':amount, 'left_amount':left_amount, 'location':location, 'misc':misc, 'cid':cid, 'updated_at':int(datetime.now().timestamp())})
     except Exception as e:
         print(str(e))
         flash(f'시약을 등록하는 과정에서 오류가 발생했습니다.\n{str(e)}'.split('\n'), 'error')
@@ -45,7 +46,8 @@ def reagent_register(name, category, amount, left_amount, location, misc, cid) -
 
 def reagent_bulk_register(reagents: list) -> bool:
     try:
-        operations = [InsertOne(item) for item in reagents]
+        now = int(datetime.now().timestamp())
+        operations = [InsertOne({**item, 'updated_at':now}) for item in reagents]
         
         if operations:
             result = reagent_collection.bulk_write(operations)
@@ -65,6 +67,7 @@ def reagent_edit(data: dict, id: str) -> bool:
         is_present, reagents = is_reagent_present({'_id': ObjectId(id)})
         if not is_present:
             raise ValueError('존재하지 않는 시약입니다.')
+        data = {**data, 'updated_at': int(datetime.now().timestamp())}
         reagent_collection.update_one({'_id': ObjectId(id)}, {'$set': data})
     except Exception as e:
         print(str(e))

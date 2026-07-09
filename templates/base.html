@@ -19,6 +19,7 @@
                     {% if current_user.is_authenticated and current_user.is_admin() %}
                     <a href="/reagent/register">개별 시약 등록</a>
                     <a href="/reagent/upload">엑셀 일괄 등록</a>
+                    <a href="/request">요청 목록</a>
                     {% endif %}
                     <a href="/reagent/download">목록 다운로드</a>
                     <a href="/reagent/3d">3D 그래프</a>
@@ -50,7 +51,7 @@
         <div class="welcome-modal">
             <div class="welcome-modal-body" id="welcome-body"></div>
             <div class="welcome-modal-footer">
-                <span class="welcome-countdown" id="welcome-countdown">8초 후 자동으로 닫힙니다</span>
+                <span class="welcome-countdown" id="welcome-countdown">10초 후 자동으로 닫힙니다</span>
                 <button class="welcome-close-btn" id="welcome-close">닫기</button>
             </div>
         </div>
@@ -101,8 +102,6 @@
 현재 해당 사이트는 온전히 **18기의 봉사 정신**으로 운영되고 있습니다.
 
 사이트 이용 중 불편한 점, 또는 원하는 기능이 있다면 게시판에 자유롭게 의견을 공유해주세요!
-
-**애초에, 이 사이트 쓰이고는 있나요???**
 `;
             // ▲ 공지 내용 끝 ▲
 
@@ -120,7 +119,7 @@
                 });
 
                 // 카운트다운
-                const TOTAL = 8;
+                const TOTAL = 10;
                 let remaining = TOTAL;
                 const tick = setInterval(function () {
                     remaining--;

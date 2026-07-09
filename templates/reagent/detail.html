@@ -48,6 +48,11 @@
                 {% endif %}
             </span>
         </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+            <span class="label">최근 수정</span>
+            <span class="value">{{ reagent.updated_at | unix_to_date if reagent.updated_at else '미상' }}</span>
+        </div>
     </div>
 
     <div class="custom-content-area">
@@ -119,7 +124,11 @@
 
     <div class="form-actions" style="margin-top: 30px; justify-content: flex-end;">
         <a href="/reagent" class="btn-secondary" style="text-decoration: none;">목록</a>
-        
+
+        {% if not (current_user.is_authenticated and current_user.is_admin()) %}
+            <a href="/request/new/{{ reagent._id }}" class="btn-primary" style="text-decoration: none;">수정 요청</a>
+        {% endif %}
+
         {% if current_user.is_authenticated and current_user.is_admin() %}
             <a href="/reagent/edit/{{ reagent._id }}" class="btn-primary" style="text-decoration: none;">수정</a>
             <a href="/reagent/delete/{{ reagent._id }}" class="btn-danger" style="text-decoration: none;">삭제</a>

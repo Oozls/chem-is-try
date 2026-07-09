@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>수정 요청 목록</h2>
+<span class="standard">시약 잔량 수정 요청을 확인하고 승인/반려할 수 있습니다.</span>
+
+<div class="table-wrapper">
+<table>
+    <thead>
+        <tr>
+            <th>시약</th>
+            <th>요청 잔량</th>
+            <th>요청자</th>
+            <th>요청일</th>
+            <th>상태</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if requests %}
+            {% for req in requests %}
+            <tr onclick="location.href='/request/{{ req._id }}'" style="cursor: pointer;">
+                <td>{{ req.reagent_name }}</td>
+                <td>{{ req.new_left_amount }}</td>
+                <td>{{ req.requester_id | id_to_username }}</td>
+                <td>{{ req.time | unix_to_date }}</td>
+                <td>
+                    <span class="badge {{ req.status }}">
+                        {% if req.status == 'pending' %}대기중
+                        {% elif req.status == 'approved' %}승인됨
+                        {% else %}반려됨{% endif %}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #888;">등록된 요청이 없습니다.</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

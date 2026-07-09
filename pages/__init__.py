@@ -25,10 +25,12 @@ CORS(app)
 from .reagent import reagent
 from .account import account
 from .board import board
+from .reagent_request import reagent_request
 
 app.register_blueprint(reagent.reagent_bp)
 app.register_blueprint(account.account_bp)
 app.register_blueprint(board.board_bp)
+app.register_blueprint(reagent_request.reagent_request_bp)
 
 @app.route('/')
 def main_page():

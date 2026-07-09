@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="detail-container">
+    <div style="margin-bottom: 30px;">
+        <h2 style="margin-bottom: 15px; border-bottom: none;">
+            <span class="badge {{ req.status }}" style="vertical-align: middle; margin-right: 8px;">
+                {% if req.status == 'pending' %}대기중{% elif req.status == 'approved' %}승인됨{% else %}반려됨{% endif %}
+            </span>
+            <span style="vertical-align: middle;">수정 요청 상세</span>
+        </h2>
+        <div class="board-meta">
+            <span>{{ req.requester_id | id_to_username }}</span>
+            <div style="width: 1px; height: 12px; background: #ddd; margin: 0 5px;"></div>
+            <span>{{ req.time | unix_to_date }}</span>
+        </div>
+        <div style="border-bottom: 2px solid #eee; margin-top: 15px;"></div>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-item">
+            <span class="label">시약</span>
+            <span class="value">
+                {% if reagent %}<a href="/reagent/detail/{{ reagent._id }}">{{ reagent.name }}</a>{% else %}삭제된 시약{% endif %}
+            </span>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+            <span class="label">현재 잔량</span>
+            <span class="value">{{ reagent.left_amount if reagent else '-' }}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-item">
+            <span class="label">요청 잔량</span>
+            <span class="value highlight">{{ req.new_left_amount }}</span>
+        </div>
+    </div>
+
+    <div class="custom-content-area">
+        <h3>추가 세부 사항</h3>
+        <div style="white-space: pre-wrap;">{{ req.detail if req.detail else '-' }}</div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
+        <a href="/request" class="btn-secondary" style="text-decoration: none;">목록으로</a>
+
+        {% if req.status == 'pending' %}
+        <div style="display: flex; gap: 10px;">
+            <form action="/request/{{ req._id }}/approve" method="POST" onsubmit="return confirm('이 요청을 승인하시겠습니까?');" style="margin:0;">
+                <button type="submit" class="btn-primary">승인</button>
+            </form>
+            <form action="/request/{{ req._id }}/reject" method="POST" onsubmit="return confirm('이 요청을 반려하시겠습니까?');" style="margin:0;">
+                <button type="submit" class="btn-danger">반려</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

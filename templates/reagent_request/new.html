@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>시약 잔량 수정 요청</h2>
+<p style="color: #666;">{{ reagent.name }}의 잔량 수정을 요청합니다. 관리자 승인 후 반영됩니다.</p>
+
+<form action="/request/new/{{ reagent._id }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+    <div class="form-group">
+        <label>현재 잔량</label>
+        <span class="standard">{{ reagent.left_amount }}</span>
+    </div>
+
+    <div class="form-group">
+        <label for="new_left_amount">변경할 잔량</label>
+        <input type="text" id="new_left_amount" name="new_left_amount" autocomplete="off" required>
+    </div>
+
+    <div class="form-group">
+        <label for="detail">추가 세부 사항</label>
+        <textarea id="detail" name="detail" placeholder="변경 사유 등을 입력해주세요."></textarea>
+    </div>
+
+    <div class="action-buttons">
+        <button type="submit">요청 제출</button>
+        <a href="/reagent/detail/{{ reagent._id }}" class="btn-secondary" style="text-decoration: none;">취소</a>
+    </div>
+</form>
+{% endblock %}
