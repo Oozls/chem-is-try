@@ -1,4 +1,6 @@
-from database import is_reagent_present, reagent_list, reagent_register, reagent_edit, reagent_delete, reagent_bulk_register, obj
+from collections import defaultdict
+from database import is_reagent_present, reagent_list, reagent_register, reagent_edit, reagent_delete, reagent_bulk_register, is_reagent_comment_present, reagent_comment_list, reagent_comment_post, reagent_comment_delete, obj
+from datetime import datetime
 from difflib import SequenceMatcher
 from flask import Blueprint, render_template, redirect, request, flash, send_file, session, jsonify
 from flask_login import login_required, current_user
@@ -236,6 +238,32 @@ def get_info(cid):
 
     return ghs_info, cas_info
 
+def get_sorted_reagent_comments(reagent_id):
+    raw_comments = reagent_comment_list({'reagent_id': reagent_id})
+    comments_by_parent = defaultdict(list)
+
+    for comment in raw_comments:
+        p_id = str(comment.get('parent_id', 'root'))
+        if p_id == 'None' or p_id == '':
+            p_id = 'root'
+
+        comments_by_parent[p_id].append(comment)
+
+    sorted_list = []
+
+    def add_children(parent_id, current_depth):
+        children = comments_by_parent.get(parent_id, [])
+
+        for child in children:
+            child['depth'] = current_depth
+            sorted_list.append(child)
+
+            add_children(str(child['_id']), current_depth + 1)
+
+    add_children('root', 0)
+
+    return sorted_list
+
 @reagent_bp.route('/detail/<id>')
 def reagent_detail_page(id):
     is_present, reagents = is_reagent_present({'_id': obj(id)})
@@ -266,7 +294,47 @@ def reagent_detail_page(id):
             ghs_info['hazard_statements'] = sorted(msgs.values(), key=lambda x: x[:4])
 
     nearby_reagents = get_nearby_reagents(str(reagent['_id']))
-    return render_template('/reagent/detail.html', reagent=reagent, ghs_info=ghs_info, cas_info=cas_info, nearby_reagents=nearby_reagents)
+    comments = get_sorted_reagent_comments(id)
+    return render_template('/reagent/detail.html', reagent=reagent, ghs_info=ghs_info, cas_info=cas_info, nearby_reagents=nearby_reagents, comments=comments)
+
+
+
+
+# --------- COMMENT POST --------- #
+@reagent_bp.route('/comment/post/<id>', methods=['POST'])
+@login_required
+def reagent_comment_post_page(id):
+    parent_id = request.form.get('parent_id')
+    depth = request.form.get('depth')
+    depth = int(depth)
+    content = request.form.get('content')
+
+    is_present, reagents = is_reagent_present({'_id': obj(id)})
+    if not is_present: return redirect('/reagent')
+
+    data = {'reagent_id': id, 'author_id': current_user.get_id(), 'parent_id': parent_id, 'depth': depth, 'content': content, "time": int(datetime.now().timestamp())}
+    success = reagent_comment_post(data)
+    if not success: return redirect(f'/reagent/detail/{id}')
+
+    return redirect(f'/reagent/detail/{id}')
+
+
+
+
+# --------- COMMENT DELETE --------- #
+@reagent_bp.route('/comment/delete/<id>', methods=['POST'])
+@login_required
+def reagent_comment_delete_page(id):
+    is_present, comments = is_reagent_comment_present({'_id': obj(id)})
+    if not is_present: return redirect('/reagent')
+    comment = comments[0]
+
+    if current_user.get_id() != comment['author_id'] and not current_user.is_admin():
+        flash('권한이 없습니다.', 'error')
+        return redirect(f'/reagent/detail/{comment["reagent_id"]}')
+
+    success = reagent_comment_delete({'_id': obj(id)}, obj(comment['reagent_id']))
+    return redirect(f'/reagent/detail/{comment["reagent_id"]}')
 
 
 

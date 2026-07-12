@@ -1,5 +1,5 @@
 from .board import board_collection, is_post_present, post_list, board_post, board_edit, board_delete, is_comment_present, comment_list, comment_post, comment_delete
-from .reagent import reagent_collection, is_reagent_present, reagent_list, reagent_register, reagent_bulk_register, reagent_edit, reagent_delete
+from .reagent import reagent_collection, is_reagent_present, reagent_list, reagent_register, reagent_bulk_register, reagent_edit, reagent_delete, reagent_comment_collection, is_reagent_comment_present, reagent_comment_list, reagent_comment_post, reagent_comment_delete
 from .account import account_collection, is_account_present, accound_register
 from .request import request_collection, is_request_present, request_list, request_create, request_edit
 from bson import ObjectId

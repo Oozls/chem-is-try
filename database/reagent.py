@@ -9,6 +9,7 @@ mongo = PyMongo()
 client = MongoClient(getenv("DB_CONNECT"), 27017)
 db = client['chemistry']
 reagent_collection = db['reagent']
+reagent_comment_collection = db['reagent_comment']
 
 def is_reagent_present(keyword: dict) -> bool | list:
     try:
@@ -88,4 +89,58 @@ def reagent_delete(keyword: dict) -> bool:
         return False
     else:
         flash('시약을 제거하였습니다.', 'success')
+        return True
+
+
+
+
+# --------- COMMENT --------- #
+def is_reagent_comment_present(keyword: dict) -> bool | list:
+    try:
+        comments = reagent_comment_collection.find(keyword)
+        comments = list(comments)
+        if len(comments) == 0: raise ValueError('존재하지 않는 댓글입니다.')
+    except Exception as e:
+        print(str(e))
+        flash(f'댓글을 확인하는 과정에서 오류가 발생했습니다.\n{str(e)}'.split('\n'), 'error')
+        return False, []
+    else:
+        return True, comments
+
+def reagent_comment_list(keyword: dict) -> list:
+    try:
+        comments = reagent_comment_collection.find(keyword)
+        comments = list(comments)
+    except Exception as e:
+        print(str(e))
+        flash(f'댓글 목록을 불러오는 과정에서 오류가 발생했습니다.\n{str(e)}'.split('\n'), 'error')
+        return None
+    else:
+        return comments
+
+def reagent_comment_post(data: dict) -> bool:
+    try:
+        reagent_comment_collection.insert_one(data)
+    except Exception as e:
+        print(str(e))
+        flash(f'댓글을 게시하는 과정에서 오류가 발생했습니다.\n{str(e)}'.split('\n'), 'error')
+        return False
+    else:
+        flash('댓글이 성공적으로 게시되었습니다.', 'success')
+        return True
+
+def reagent_comment_delete(keyword: dict, reagent_id: ObjectId) -> bool:
+    try:
+        is_present, comments = is_reagent_comment_present(keyword)
+        if not is_present: raise ValueError('존재하지 않는 댓글입니다.')
+        reagent_comment_collection.delete_many(keyword)
+
+        is_present, reagents = is_reagent_present({'_id': reagent_id})
+        if not is_present: raise ValueError('존재하지 않는 시약입니다.')
+    except Exception as e:
+        print(str(e))
+        flash(f'댓글을 삭제하는 과정에서 오류가 발생했습니다.\n{str(e)}'.split('\n'), 'error')
+        return False
+    else:
+        flash('댓글을 삭제하였습니다.', 'success')
         return True

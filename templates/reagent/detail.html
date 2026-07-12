@@ -134,5 +134,101 @@
             <a href="/reagent/delete/{{ reagent._id }}" class="btn-danger" style="text-decoration: none;">삭제</a>
         {% endif %}
     </div>
+
+    <div class="comment-section" id="comments">
+        <div class="comment-count">
+            댓글 <span>{{ comments|length }}</span>
+        </div>
+
+        <div class="comment-write-box">
+            <form action="/reagent/comment/post/{{ reagent._id }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+                <input type="hidden" name="depth" value="0">
+                <input type="hidden" name="parent_id" value="">
+
+                {% if current_user.is_authenticated %}
+                    <label style="display:block; margin-bottom:8px; font-weight:600;">{{ current_user.get_id() | id_to_username }}</label>
+                    <textarea name="content" placeholder="..." required></textarea>
+                    <div style="text-align: right;">
+                        <button type="submit" class="btn-primary" style="padding: 8px 20px; font-size: 0.9rem;">등록</button>
+                    </div>
+                {% else %}
+                    <textarea placeholder="로그인이 필요한 서비스입니다." disabled></textarea>
+                    <div style="text-align: right;">
+                        <a href="/account/login" class="btn-primary" style="padding: 8px 20px; font-size: 0.9rem;">로그인</a>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="comment-list">
+            {% for comment in comments %}
+            <div class="comment-item {% if comment.depth > 0 %}is-reply{% endif %}" style="padding-left: {{ comment.depth * 40 }}px;">
+
+                <div class="comment-header">
+                    <span class="comment-author">
+                        {% if comment.depth > 0 %}
+                        <span class="tree-branch">└</span>
+                        {% endif %}
+                        {{ comment.author_id | id_to_username }}
+                    </span>
+                    <span class="comment-date">{{ comment.time | unix_to_date }}</span>
+                </div>
+
+                <div class="comment-body">{{ comment.content }}</div>
+
+                <div class="comment-actions">
+                    {% if current_user.is_authenticated %}
+                    <button type="button" class="btn-text" onclick="toggleReplyForm('{{ comment._id }}')">답글</button>
+                    {% endif %}
+
+                    {% if current_user.is_authenticated %}
+                    {% if current_user.get_id() == comment.author_id or current_user.is_admin() %}
+                    <form action="/reagent/comment/delete/{{ comment._id }}" method="POST" onsubmit="return confirm('댓글을 삭제하시겠습니까?');" style="display:inline;">
+                        <input type="hidden" name="reagent_id" value="{{ reagent._id }}">
+                        <button type="submit" class="btn-text" style="color: #d9534f;">삭제</button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </div>
+
+                <div id="reply-form-{{ comment._id }}" class="reply-form-container">
+                    <div class="comment-write-box" style="margin-bottom: 0; background-color: #fff;">
+                        <form action="/reagent/comment/post/{{ reagent._id }}" method="POST" onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+                            <input type="hidden" name="parent_id" value="{{ comment._id }}">
+                            <input type="hidden" name="depth" value="{{ comment.depth + 1 }}">
+
+                            <p style="margin-top:0; margin-bottom:8px; font-size:0.9rem; color:#666;">
+                                <strong>@{{ comment.author_id | id_to_username }}</strong> 님에게 답글 작성
+                            </p>
+                            <textarea name="content" placeholder="..." required></textarea>
+                            <div style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                                <button type="button" class="btn-secondary" onclick="toggleReplyForm('{{ comment._id }}')" style="padding: 6px 15px; font-size: 0.85rem;">취소</button>
+                                <button type="submit" class="btn-primary" style="padding: 6px 15px; font-size: 0.85rem;">등록</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 40px; color: #999;">
+                작성된 댓글이 없습니다. 첫 번째 댓글을 남겨보세요!
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
+
+<script>
+function toggleReplyForm(commentId) {
+    const formContainer = document.getElementById('reply-form-' + commentId);
+    if (formContainer.style.display === 'block') {
+        formContainer.style.display = 'none';
+    } else {
+        formContainer.style.display = 'block';
+        formContainer.querySelector('textarea').focus();
+    }
+}
+</script>
+
 {% endblock %}
